@@ -1,0 +1,684 @@
+info:
+  description: API for Pigeonhole services.
+  title: PigeonHole API
+  version: 1.0.0
+openapi: 3.0.0
+servers:
+  - description: Production server (uses live data)
+    url: https://api.pigeonhole.io
+  - description: Production server (uses live data)
+    url: http://api.pigeonhole.io
+  - description: Sandbox server (uses test data)
+    url: https://sandbox-api.example.com
+  - description: Localhost Dev
+    url: http://localhost:3000
+tags:
+  - description: Everything relating to the User
+    name: user
+  - description: Everything relating to the user auth
+    name: auth
+
+x-commonErrorResponses: &commonErrorResponses
+  400:
+    $ref: '#/components/responses/GeneralErrorResponse'
+  401:
+    $ref: '#/components/responses/GeneralErrorResponse'
+  403:
+    $ref: '#/components/responses/GeneralErrorResponse'
+  500:
+    $ref: '#/components/responses/GeneralErrorResponse'
+
+components:
+  responses:
+    CreateSecretResponse:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateSecretResponse'
+      description: A Secret object
+    Secret:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Secret'
+      description: A Secret object
+    Key:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Key'
+      description: A Key object
+    Keys:
+      content:
+        application/json:
+          schema:
+            items:
+              $ref: '#/components/schemas/Key'
+            type: array
+      description: An array of Key objects
+    Secrets:
+      content:
+        application/json:
+          schema:
+            items:
+              $ref: '#/components/schemas/Secret'
+            type: array
+      description: An array of User objects
+    GeneralErrorResponse:
+      description: General Error Response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GeneralErrorResponse'
+    Token:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Token'
+      description: A token response
+    User:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/User'
+      description: A User object
+    Users:
+      content:
+        application/json:
+          schema:
+            items:
+              $ref: '#/components/schemas/User'
+            type: array
+      description: An array of User objects
+    
+  schemas:
+    CreateSecretResponse:
+      type: object
+      properties:
+        s3_info:
+          type: object
+          properties:
+            fields:
+              type: object
+              properties:
+                key:
+                  type: string
+                policy:
+                  type: string
+                x-amz-algorithm:
+                  type: string
+                x-amz-credential:
+                  type: string
+                x-amz-date:
+                  type: string
+                x-amz-meta-recipient_ids:
+                  type: array
+                  items:
+                    type: string
+                x-amz-meta-sender_id:
+                  type: string
+                x-amz-meta-reference:
+                  type: string
+                x-amz-signature:
+                  type: string
+            url:
+              type: string
+              format: uri
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    CreateSecret:
+      properties:
+        recipient_ids:
+          description: A list of recipient IDs.
+          items:
+            type: string
+          type: array
+        reference:
+          description: A reference string for the secret.
+          type: string
+      required:
+        - recipient_ids
+        - reference
+      type: object
+    
+    NewKey:
+      properties:
+        key_data:
+          type: string
+        thumbprint:
+          type: string
+        only:
+          type: boolean
+          default: false
+        force:
+          type: boolean
+          default: false
+        reference:
+          type: string
+    Key:
+      properties:
+        reference:
+          type: string
+        created_at:
+          type: string
+        id:
+          format: uuid
+          type: string
+        thumbprint:
+          type: string
+        key_data:
+          type: string
+      required:
+        - tenant
+        - key
+      type: object
+    Secret:
+      properties:
+        # id:
+        #   format: uuid
+        #   type: string
+        reference:
+          type: string
+        recipient:
+          type: string
+        sender:
+          type: string
+        sent_at:
+          type: string
+        size:
+          type: string
+      type: object
+    
+    
+    Tenant:
+      properties:
+        id:
+          format: uuid
+          type: string
+        name:
+          type: string
+        ref:
+          type: string
+      required:
+        - name
+        - ref
+      type: object
+    Token:
+      properties:
+        accessToken:
+          type: string
+      required:
+        - accessToken
+      type: object
+    User:
+      type: object
+      properties:
+        keys:
+          type: array
+          items:
+            $ref: '#/components/schemas/Key'
+        email:
+          type: string
+        id:
+          format: uuid
+          type: string
+        shortcode:
+          type: string
+      required:
+        - username
+      
+    GeneralErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+      - message
+  securitySchemes:
+    jwt_azure:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
+      # in: header
+      # name: Authorization
+      # type: apiKey
+      x-bearerInfoFunc: pigeonhole.controllers.jwt_security.jwt_azure
+    jwt_pigeonhole:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
+      # bearerFormat: JWT
+      # scheme: bearer
+      # type: http
+      x-bearerInfoFunc: pigeonhole.controllers.jwt_security.jwt_pigeonhole
+paths:
+  /auth/sso/token:
+    post:
+      description: Generates a token for the user from the Identity Provider
+      operationId: pigeonhole.controllers.auth.auth_sso_token_post
+      responses:
+        '201':
+          $ref: '#/components/responses/Token'
+          description: Successfully retrieved token
+        <<: *commonErrorResponses
+      security:
+        - jwt_azure: []
+      summary: Get a token for the user
+      tags:
+        - auth
+      # x-openapi-router-controller: pigeonhole.controllers.auth
+  /auth/token:
+    post:
+      description: Generates a token for the user
+      operationId: auth_token_post
+      responses:
+        '200':
+          description: Successfully retrieved token
+        <<: *commonErrorResponses
+      security:
+        - jwt_pigeonhole: []
+      summary: Get a token for the user
+      tags:
+        - auth
+      # x-openapi-router-controller: pigeonhole.controllers.auth
+  /pki:
+    get:
+      description: Gets my tokens
+      operationId: pigeonhole.controllers.pki.pki_get
+      responses:
+        '200':
+          description: Successfully retrieved token
+        <<: *commonErrorResponses
+  /secret:
+    delete:
+      description: Delete all my sent and received secrets
+      summary: Delete all my sent and received secrets
+      operationId: secret_delete
+      parameters:
+        - in: query
+          name: reference
+          required: false
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Delete on a resource is successful
+        <<: *commonErrorResponses
+      security:
+        - jwt_pigeonhole: []
+      tags:
+        - secret
+      # x-openapi-router-controller: pigeonhole.controllers.secret
+    get:
+      description: Get my secrets
+      operationId: secret_get
+      parameters:
+        - in: query
+          name: reference
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Secrets'
+          description: Successfully retrieved items
+        <<: *commonErrorResponses
+      security:
+        - jwt_pigeonhole: []
+      summary: Get my secrets
+      tags:
+        - key
+      # x-openapi-router-controller: pigeonhole.controllers.secret
+    post:
+      description: Generates a presigned url
+      operationId: secret_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSecret'
+        required: true
+      responses:
+        '201':
+          $ref: '#/components/responses/CreateSecretResponse'
+        '404':
+          description: User not found
+          $ref: '#/components/responses/GeneralErrorResponse'
+        <<: *commonErrorResponses
+      security:
+        - jwt_pigeonhole: []
+      tags:
+        - key
+        - user
+      # x-openapi-router-controller: pigeonhole.controllers.secret
+  /secret/{secret_id}:
+    delete:
+      description: Delete a particular secret
+      summary: Delete a particular secret
+      operationId: secret_id_delete
+      parameters:
+        - in: path
+          name: secret_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved items
+        <<: *commonErrorResponses
+
+      security:
+        - jwt_pigeonhole: []
+      tags:
+        - secret
+      # x-openapi-router-controller: pigeonhole.controllers.secret
+    get:
+      description: Get secret information
+      operationId: get_secret_id
+      parameters:
+        - in: path
+          name: secret_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Secret'
+          description: Successfully retrieved items
+        <<: *commonErrorResponses
+          
+      security:
+        - jwt_pigeonhole: []
+      summary: Get secret by id or shortcode. This will include the presignedurl
+      tags:
+        - key
+      # x-openapi-router-controller: pigeonhole.controllers.secret
+  /secret/{secret_id}/download:
+    get:
+      description: Get secret information
+      operationId: download_secret_blob
+      parameters:
+        - in: path
+          name: secret_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '307':
+          description: Successfully retrieved items
+        <<: *commonErrorResponses
+      security:
+        - jwt_pigeonhole: []
+      tags:
+        - secret
+      # x-openapi-router-controller: pigeonhole.controllers.secret
+  /user:
+    get:
+      description: Retrieve all items from the given schema
+      operationId: user_get
+      parameters:
+        - in: query
+          name: id
+          required: false
+          schema:
+            items:
+              type: string
+            type: array
+      responses:
+        '200':
+          $ref: '#/components/responses/Users'
+          description: Successfully retrieved items
+        <<: *commonErrorResponses
+      security:
+        - jwt_pigeonhole: []
+      summary: Retrieve all items from the given schema
+      tags:
+        - user
+      # x-openapi-router-controller: pigeonhole.controllers.user
+  /user/me:
+    get:
+      description: Get my user object
+      operationId: user_me_get
+      responses:
+        '200':
+          $ref: '#/components/responses/User'
+          description: Successfully retrieved items
+        <<: *commonErrorResponses
+      security:
+        - jwt_pigeonhole: []
+      summary: Get my user object
+      tags:
+        - user
+      # x-openapi-router-controller: pigeonhole.controllers.user
+  /user/me/rotate-shortcode:
+    post:
+      description: Rotate users short code to remain anonymous
+      operationId: user_me_rotateshortcode_post
+      responses:
+        '204':
+          description: Successfully rotated shortcode
+        <<: *commonErrorResponses
+      security:
+        - jwt_pigeonhole: []
+      summary: Get my user object
+      tags:
+        - user
+      # x-openapi-router-controller: pigeonhole.controllers.user
+  /user/me/key:
+    get:
+      description: Get my user object
+      operationId: user_me_key_get
+      responses:
+        '200':
+          $ref: '#/components/responses/Keys'
+          description: Successfully retrieved items
+        <<: *commonErrorResponses
+        # '400':
+        #   $ref: '#/components/responses/GeneralError'
+        # '401':
+        #   $ref: '#/components/responses/UnauthorizedError'
+        # '403':
+        #   $ref: '#/components/responses/UnauthorizedError'
+        # '404':
+        #   $ref: '#/components/responses/UnauthorizedError'
+        #   description: Secret not found
+      security:
+        - jwt_pigeonhole: []
+      summary: Get my user object
+      tags:
+        - user
+        - key
+      # x-openapi-router-controller: pigeonhole.controllers.user
+    post:
+      description: Create new keys
+      operationId: user_me_key_post
+      # x-openapi-router-controller: pigeonhole.controllers.user
+      responses:
+        '201':
+          $ref: '#/components/responses/Key'
+          description: Successfully uploaded key
+        <<: *commonErrorResponses
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewKey'
+      security:
+        - jwt_pigeonhole: []
+      summary: Get my user object
+      tags:
+        - user
+        - key
+  /user/me/key/validate/{thumbprint}:
+    get:
+      description: Get users key by thumbprint
+      operationId: user_me_key_validate_thumbprint_get
+      parameters:
+        - in: path
+          name: thumbprint
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved items
+        '404':
+          description: No key found
+        <<: *commonErrorResponses
+      security:
+        - jwt_pigeonhole: []
+      summary: Get my user object
+      tags:
+        - user
+        - key
+      # x-openapi-router-controller: pigeonhole.controllers.user
+  /user/{user_id}:
+    get:
+      description: Get users' keys
+      operationId: user_id_get
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved items
+          $ref: '#/components/responses/User'
+        <<: *commonErrorResponses
+      security:
+        - jwt_pigeonhole: []
+      summary: Get my user object
+      tags:
+        - user
+      # x-openapi-router-controller: pigeonhole.controllers.user
+
+  /user/{user_id}/key:
+    get:
+      description: Get users' keys
+      operationId: user_id_key_get
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Return a list of keys
+          $ref: '#/components/responses/Keys'
+        <<: *commonErrorResponses
+      security:
+        - jwt_pigeonhole: []
+      summary: Get my user object
+      tags:
+        - key
+      # x-openapi-router-controller: pigeonhole.controllers.user
+    post:
+      description: r
+      operationId: user_id_key_post
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewKey'
+        required: true
+      responses:
+        '201':
+          description: OK
+        <<: *commonErrorResponses
+      security:
+        - jwt_pigeonhole: []
+      tags:
+        - key
+        - user
+      # x-openapi-router-controller: pigeonhole.controllers.user
+  /user/{user_id}/key/{key_id}/key:
+    delete:
+      description: r
+      operationId: user_id_key_id_delete
+      parameters:
+        - in: path
+          name: key_id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Key'
+        required: true
+      responses:
+        '200':
+          description: OK
+        <<: *commonErrorResponses
+      security:
+        - jwt_pigeonhole: []
+      tags:
+        - key
+        - user
+      # x-openapi-router-controller: pigeonhole.controllers.user
+    get:
+      description: r
+      operationId: user_id_key_id_get
+      parameters:
+        - in: path
+          name: key_id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Key'
+        required: true
+      responses:
+        '200':
+          description: OK
+        <<: *commonErrorResponses
+      security:
+        - jwt_pigeonhole: []
+      tags:
+        - key
+        - user
+      # x-openapi-router-controller: pigeonhole.controllers.user
+  /user/{user_id}/public:
+    get:
+      description: Either a users email or id to retrieve public information
+      operationId: user_public_get
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved items
+        <<: *commonErrorResponses
+      summary: Retrieve all public information about a user
+      tags:
+        - user
+      # x-openapi-router-controller: pigeonhole.controllers.user
