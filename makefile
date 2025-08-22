@@ -21,7 +21,7 @@ generate:
 	@echo "Generating API server fiber stubs..."
 	@mkdir -p ../server/src/stub
 	@$(OAPI_CODEGEN) --package stub -generate fiber -o ../server/src/stub/server.gen.go $(OPENAPI_SPEC)
-	@sed -i '/"fmt"/a \    sdk "github.com/pigeonholeio/common"' ../server/src/stub/server.gen.go
+# 	@sed -i '/"fmt"/a \    sdk "github.com/pigeonholeio/common"' ../server/src/stub/server.gen.go
 	@echo "API code generation complete."
 	git add .
 	git commit -m'updated sdk'
