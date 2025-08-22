@@ -15,7 +15,6 @@ all: api server cli
 
 # Regenerate API code into separate packages
 generate:
-	@mkdir -p $(API_DIR)/common
 	@echo "Generating API types..."
 	@$(OAPI_CODEGEN) --package sdk -generate types -o types.gen.go $(OPENAPI_SPEC)
 	
