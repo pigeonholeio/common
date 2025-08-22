@@ -1,17 +1,14 @@
-info:
-  description: API for Pigeonhole services.
-  title: PigeonHole API
-  version: 1.0.0
 openapi: 3.0.0
+info:
+  title: PigeonHole API
+  description: API for Pigeonhole services.
+  version: 1.0.0
 servers:
   - description: Production server (uses live data)
     url: https://api.pigeonhole.io
-  - description: Production server (uses live data)
-    url: http://api.pigeonhole.io
-  - description: Sandbox server (uses test data)
-    url: https://sandbox-api.example.com
   - description: Localhost Dev
     url: http://localhost:3000
+
 tags:
   - description: Everything relating to the User
     name: user
@@ -191,7 +188,6 @@ components:
           type: string
       type: object
     
-    
     Tenant:
       properties:
         id:
@@ -237,23 +233,17 @@ components:
       required:
       - message
   securitySchemes:
-    jwt_azure:
-      bearerFormat: JWT
-      scheme: bearer
+    BearerAuth:
       type: http
-      # in: header
-      # name: Authorization
-      # type: apiKey
-      x-bearerInfoFunc: pigeonhole.controllers.jwt_security.jwt_azure
-    jwt_pigeonhole:
-      bearerFormat: JWT
       scheme: bearer
-      type: http
-      # bearerFormat: JWT
-      # scheme: bearer
-      # type: http
-      x-bearerInfoFunc: pigeonhole.controllers.jwt_security.jwt_pigeonhole
 paths:
+  /auth/azure-handler:
+    get:
+      responses:
+        '200':
+          description: Successfully retrieved token
+        <<: *commonErrorResponses
+      summary: Azure AD redirect handler
   /auth/sso/token:
     post:
       description: Generates a token for the user from the Identity Provider
@@ -264,11 +254,10 @@ paths:
           description: Successfully retrieved token
         <<: *commonErrorResponses
       security:
-        - jwt_azure: []
+        - BearerAuth: []
       summary: Get a token for the user
       tags:
         - auth
-      # x-openapi-router-controller: pigeonhole.controllers.auth
   /auth/token:
     post:
       description: Generates a token for the user
@@ -278,7 +267,7 @@ paths:
           description: Successfully retrieved token
         <<: *commonErrorResponses
       security:
-        - jwt_pigeonhole: []
+        - BearerAuth: []
       summary: Get a token for the user
       tags:
         - auth
@@ -307,7 +296,7 @@ paths:
           description: Delete on a resource is successful
         <<: *commonErrorResponses
       security:
-        - jwt_pigeonhole: []
+        - BearerAuth: []
       tags:
         - secret
       # x-openapi-router-controller: pigeonhole.controllers.secret
@@ -326,7 +315,7 @@ paths:
           description: Successfully retrieved items
         <<: *commonErrorResponses
       security:
-        - jwt_pigeonhole: []
+        - BearerAuth: []
       summary: Get my secrets
       tags:
         - key
@@ -348,7 +337,7 @@ paths:
           $ref: '#/components/responses/GeneralErrorResponse'
         <<: *commonErrorResponses
       security:
-        - jwt_pigeonhole: []
+        - BearerAuth: []
       tags:
         - key
         - user
@@ -370,7 +359,7 @@ paths:
         <<: *commonErrorResponses
 
       security:
-        - jwt_pigeonhole: []
+        - BearerAuth: []
       tags:
         - secret
       # x-openapi-router-controller: pigeonhole.controllers.secret
@@ -390,7 +379,7 @@ paths:
         <<: *commonErrorResponses
           
       security:
-        - jwt_pigeonhole: []
+        - BearerAuth: []
       summary: Get secret by id or shortcode. This will include the presignedurl
       tags:
         - key
@@ -410,7 +399,7 @@ paths:
           description: Successfully retrieved items
         <<: *commonErrorResponses
       security:
-        - jwt_pigeonhole: []
+        - BearerAuth: []
       tags:
         - secret
       # x-openapi-router-controller: pigeonhole.controllers.secret
@@ -432,7 +421,7 @@ paths:
           description: Successfully retrieved items
         <<: *commonErrorResponses
       security:
-        - jwt_pigeonhole: []
+        - BearerAuth: []
       summary: Retrieve all items from the given schema
       tags:
         - user
@@ -447,7 +436,7 @@ paths:
           description: Successfully retrieved items
         <<: *commonErrorResponses
       security:
-        - jwt_pigeonhole: []
+        - BearerAuth: []
       summary: Get my user object
       tags:
         - user
@@ -461,7 +450,7 @@ paths:
           description: Successfully rotated shortcode
         <<: *commonErrorResponses
       security:
-        - jwt_pigeonhole: []
+        - BearerAuth: []
       summary: Get my user object
       tags:
         - user
@@ -485,7 +474,7 @@ paths:
         #   $ref: '#/components/responses/UnauthorizedError'
         #   description: Secret not found
       security:
-        - jwt_pigeonhole: []
+        - BearerAuth: []
       summary: Get my user object
       tags:
         - user
@@ -507,7 +496,7 @@ paths:
             schema:
               $ref: '#/components/schemas/NewKey'
       security:
-        - jwt_pigeonhole: []
+        - BearerAuth: []
       summary: Get my user object
       tags:
         - user
@@ -529,7 +518,7 @@ paths:
           description: No key found
         <<: *commonErrorResponses
       security:
-        - jwt_pigeonhole: []
+        - BearerAuth: []
       summary: Get my user object
       tags:
         - user
@@ -551,7 +540,7 @@ paths:
           $ref: '#/components/responses/User'
         <<: *commonErrorResponses
       security:
-        - jwt_pigeonhole: []
+        - BearerAuth: []
       summary: Get my user object
       tags:
         - user
@@ -573,7 +562,7 @@ paths:
           $ref: '#/components/responses/Keys'
         <<: *commonErrorResponses
       security:
-        - jwt_pigeonhole: []
+        - BearerAuth: []
       summary: Get my user object
       tags:
         - key
@@ -598,7 +587,7 @@ paths:
           description: OK
         <<: *commonErrorResponses
       security:
-        - jwt_pigeonhole: []
+        - BearerAuth: []
       tags:
         - key
         - user
@@ -629,7 +618,7 @@ paths:
           description: OK
         <<: *commonErrorResponses
       security:
-        - jwt_pigeonhole: []
+        - BearerAuth: []
       tags:
         - key
         - user
@@ -659,7 +648,7 @@ paths:
           description: OK
         <<: *commonErrorResponses
       security:
-        - jwt_pigeonhole: []
+        - BearerAuth: []
       tags:
         - key
         - user
