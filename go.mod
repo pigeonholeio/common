@@ -1,4 +1,4 @@
-module github.com/pigeonholeio/api/v2
+module github.com/pigeonholeio/common
 
 go 1.24.3
 
