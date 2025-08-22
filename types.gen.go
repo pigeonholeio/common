@@ -71,11 +71,6 @@ type Secret struct {
 	Size      *string `json:"size,omitempty"`
 }
 
-// Token defines model for Token.
-type Token struct {
-	AccessToken string `json:"accessToken"`
-}
-
 // User defines model for User.
 type User struct {
 	Email     *string             `json:"email,omitempty"`
@@ -93,32 +88,32 @@ type Secrets = []Secret
 // Users defines model for Users.
 type Users = []User
 
-// SecretDeleteParams defines parameters for SecretDelete.
-type SecretDeleteParams struct {
+// DeleteSecretParams defines parameters for DeleteSecret.
+type DeleteSecretParams struct {
 	Reference *string `form:"reference,omitempty" json:"reference,omitempty"`
 }
 
-// SecretGetParams defines parameters for SecretGet.
-type SecretGetParams struct {
+// GetSecretParams defines parameters for GetSecret.
+type GetSecretParams struct {
 	Reference *string `form:"reference,omitempty" json:"reference,omitempty"`
 }
 
-// UserGetParams defines parameters for UserGet.
-type UserGetParams struct {
+// GetUserParams defines parameters for GetUser.
+type GetUserParams struct {
 	Id *[]string `form:"id,omitempty" json:"id,omitempty"`
 }
 
-// SecretPostJSONRequestBody defines body for SecretPost for application/json ContentType.
-type SecretPostJSONRequestBody = CreateSecret
+// PostSecretJSONRequestBody defines body for PostSecret for application/json ContentType.
+type PostSecretJSONRequestBody = CreateSecret
 
-// UserMeKeyPostJSONRequestBody defines body for UserMeKeyPost for application/json ContentType.
-type UserMeKeyPostJSONRequestBody = NewKey
+// PostUserMeKeyJSONRequestBody defines body for PostUserMeKey for application/json ContentType.
+type PostUserMeKeyJSONRequestBody = NewKey
 
-// UserIdKeyPostJSONRequestBody defines body for UserIdKeyPost for application/json ContentType.
-type UserIdKeyPostJSONRequestBody = NewKey
+// PostUserUserIdKeyJSONRequestBody defines body for PostUserUserIdKey for application/json ContentType.
+type PostUserUserIdKeyJSONRequestBody = NewKey
 
-// UserIdKeyIdDeleteJSONRequestBody defines body for UserIdKeyIdDelete for application/json ContentType.
-type UserIdKeyIdDeleteJSONRequestBody = Key
+// DeleteUserUserIdKeyKeyIdKeyJSONRequestBody defines body for DeleteUserUserIdKeyKeyIdKey for application/json ContentType.
+type DeleteUserUserIdKeyKeyIdKeyJSONRequestBody = Key
 
-// UserIdKeyIdGetJSONRequestBody defines body for UserIdKeyIdGet for application/json ContentType.
-type UserIdKeyIdGetJSONRequestBody = Key
+// GetUserUserIdKeyKeyIdKeyJSONRequestBody defines body for GetUserUserIdKeyKeyIdKey for application/json ContentType.
+type GetUserUserIdKeyKeyIdKeyJSONRequestBody = Key

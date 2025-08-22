@@ -237,54 +237,16 @@ components:
       type: http
       scheme: bearer
 paths:
-  /auth/azure-handler:
+  /auth/token-handler:
     get:
       responses:
         '200':
-          description: Successfully retrieved token
+          description: This is where the cli will post the ID token from the OIDC provider
         <<: *commonErrorResponses
-      summary: Azure AD redirect handler
-  /auth/sso/token:
-    post:
-      description: Generates a token for the user from the Identity Provider
-      operationId: pigeonhole.controllers.auth.auth_sso_token_post
-      responses:
-        '201':
-          $ref: '#/components/responses/Token'
-          description: Successfully retrieved token
-        <<: *commonErrorResponses
-      security:
-        - BearerAuth: []
-      summary: Get a token for the user
-      tags:
-        - auth
-  /auth/token:
-    post:
-      description: Generates a token for the user
-      operationId: auth_token_post
-      responses:
-        '200':
-          description: Successfully retrieved token
-        <<: *commonErrorResponses
-      security:
-        - BearerAuth: []
-      summary: Get a token for the user
-      tags:
-        - auth
-      # x-openapi-router-controller: pigeonhole.controllers.auth
-  /pki:
-    get:
-      description: Gets my tokens
-      operationId: pigeonhole.controllers.pki.pki_get
-      responses:
-        '200':
-          description: Successfully retrieved token
-        <<: *commonErrorResponses
+      summary: Generic ID Token handler to be exchanged for a Pigeonhole token
   /secret:
     delete:
-      description: Delete all my sent and received secrets
-      summary: Delete all my sent and received secrets
-      operationId: secret_delete
+      description: Delete all the users secrets
       parameters:
         - in: query
           name: reference
@@ -299,10 +261,8 @@ paths:
         - BearerAuth: []
       tags:
         - secret
-      # x-openapi-router-controller: pigeonhole.controllers.secret
     get:
       description: Get my secrets
-      operationId: secret_get
       parameters:
         - in: query
           name: reference
@@ -319,10 +279,9 @@ paths:
       summary: Get my secrets
       tags:
         - key
-      # x-openapi-router-controller: pigeonhole.controllers.secret
+
     post:
       description: Generates a presigned url
-      operationId: secret_post
       requestBody:
         content:
           application/json:
@@ -341,12 +300,11 @@ paths:
       tags:
         - key
         - user
-      # x-openapi-router-controller: pigeonhole.controllers.secret
+
   /secret/{secret_id}:
     delete:
       description: Delete a particular secret
       summary: Delete a particular secret
-      operationId: secret_id_delete
       parameters:
         - in: path
           name: secret_id
@@ -362,10 +320,9 @@ paths:
         - BearerAuth: []
       tags:
         - secret
-      # x-openapi-router-controller: pigeonhole.controllers.secret
+
     get:
-      description: Get secret information
-      operationId: get_secret_id
+      description: Get a secret by id or reference
       parameters:
         - in: path
           name: secret_id
@@ -383,11 +340,10 @@ paths:
       summary: Get secret by id or shortcode. This will include the presignedurl
       tags:
         - key
-      # x-openapi-router-controller: pigeonhole.controllers.secret
+
   /secret/{secret_id}/download:
     get:
-      description: Get secret information
-      operationId: download_secret_blob
+      description: Redirects the request to the S3 presigned URL for download
       parameters:
         - in: path
           name: secret_id
@@ -396,17 +352,16 @@ paths:
             type: string
       responses:
         '307':
-          description: Successfully retrieved items
+          description: Redirect to the file download URL
         <<: *commonErrorResponses
       security:
         - BearerAuth: []
       tags:
         - secret
-      # x-openapi-router-controller: pigeonhole.controllers.secret
+
   /user:
     get:
-      description: Retrieve all items from the given schema
-      operationId: user_get
+      description: Retrieve a list of users given a query e.g. user email, shortcode or id
       parameters:
         - in: query
           name: id
@@ -418,18 +373,17 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/Users'
-          description: Successfully retrieved items
+          description: Successfully retrieved users
         <<: *commonErrorResponses
       security:
         - BearerAuth: []
       summary: Retrieve all items from the given schema
       tags:
         - user
-      # x-openapi-router-controller: pigeonhole.controllers.user
+
   /user/me:
     get:
       description: Get my user object
-      operationId: user_me_get
       responses:
         '200':
           $ref: '#/components/responses/User'
@@ -440,11 +394,10 @@ paths:
       summary: Get my user object
       tags:
         - user
-      # x-openapi-router-controller: pigeonhole.controllers.user
+
   /user/me/rotate-shortcode:
     post:
       description: Rotate users short code to remain anonymous
-      operationId: user_me_rotateshortcode_post
       responses:
         '204':
           description: Successfully rotated shortcode
@@ -454,11 +407,10 @@ paths:
       summary: Get my user object
       tags:
         - user
-      # x-openapi-router-controller: pigeonhole.controllers.user
+
   /user/me/key:
     get:
       description: Get my user object
-      operationId: user_me_key_get
       responses:
         '200':
           $ref: '#/components/responses/Keys'
@@ -479,11 +431,10 @@ paths:
       tags:
         - user
         - key
-      # x-openapi-router-controller: pigeonhole.controllers.user
+
     post:
       description: Create new keys
-      operationId: user_me_key_post
-      # x-openapi-router-controller: pigeonhole.controllers.user
+
       responses:
         '201':
           $ref: '#/components/responses/Key'
@@ -504,7 +455,6 @@ paths:
   /user/me/key/validate/{thumbprint}:
     get:
       description: Get users key by thumbprint
-      operationId: user_me_key_validate_thumbprint_get
       parameters:
         - in: path
           name: thumbprint
@@ -523,11 +473,10 @@ paths:
       tags:
         - user
         - key
-      # x-openapi-router-controller: pigeonhole.controllers.user
+
   /user/{user_id}:
     get:
       description: Get users' keys
-      operationId: user_id_get
       parameters:
         - in: path
           name: user_id
@@ -544,12 +493,11 @@ paths:
       summary: Get my user object
       tags:
         - user
-      # x-openapi-router-controller: pigeonhole.controllers.user
+
 
   /user/{user_id}/key:
     get:
       description: Get users' keys
-      operationId: user_id_key_get
       parameters:
         - in: path
           name: user_id
@@ -566,10 +514,9 @@ paths:
       summary: Get my user object
       tags:
         - key
-      # x-openapi-router-controller: pigeonhole.controllers.user
+
     post:
       description: r
-      operationId: user_id_key_post
       parameters:
         - in: path
           name: user_id
@@ -591,11 +538,10 @@ paths:
       tags:
         - key
         - user
-      # x-openapi-router-controller: pigeonhole.controllers.user
+
   /user/{user_id}/key/{key_id}/key:
     delete:
       description: r
-      operationId: user_id_key_id_delete
       parameters:
         - in: path
           name: key_id
@@ -622,10 +568,9 @@ paths:
       tags:
         - key
         - user
-      # x-openapi-router-controller: pigeonhole.controllers.user
+
     get:
       description: r
-      operationId: user_id_key_id_get
       parameters:
         - in: path
           name: key_id
@@ -652,11 +597,10 @@ paths:
       tags:
         - key
         - user
-      # x-openapi-router-controller: pigeonhole.controllers.user
+
   /user/{user_id}/public:
     get:
       description: Either a users email or id to retrieve public information
-      operationId: user_public_get
       parameters:
         - in: path
           name: user_id
@@ -670,4 +614,4 @@ paths:
       summary: Retrieve all public information about a user
       tags:
         - user
-      # x-openapi-router-controller: pigeonhole.controllers.user
+
