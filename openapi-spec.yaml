@@ -77,9 +77,11 @@ components:
             - type: object
               properties:
                 oidcProviders:
-                  type: array
-                  items:
+                  type: object
+                  additionalProperties:
                     $ref: '#/components/schemas/OIDCProvider'
+
+
             - type: object
               properties:
                 default:
