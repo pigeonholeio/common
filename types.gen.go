@@ -63,6 +63,15 @@ type NewKey struct {
 	Thumbprint *string `json:"thumbprint,omitempty"`
 }
 
+// OIDCProvider defines model for OIDCProvider.
+type OIDCProvider struct {
+	Fields *struct {
+		DeviceEndpoint       *string `json:"deviceEndpoint,omitempty"`
+		Name                 *string `json:"name,omitempty"`
+		TokenHandlerEndpoint *string `json:"tokenHandlerEndpoint,omitempty"`
+	} `json:"fields,omitempty"`
+}
+
 // Secret defines model for Secret.
 type Secret struct {
 	Recipient *string `json:"recipient,omitempty"`
@@ -85,6 +94,13 @@ type GeneralResponseWithKeys struct {
 	Code    *float32 `json:"code"`
 	Keys    *[]Key   `json:"keys,omitempty"`
 	Message *string  `json:"message"`
+}
+
+// GeneralResponseWithOIDCProviders defines model for GeneralResponseWithOIDCProviders.
+type GeneralResponseWithOIDCProviders struct {
+	Code    *float32        `json:"code"`
+	Keys    *[]OIDCProvider `json:"keys,omitempty"`
+	Message *string         `json:"message"`
 }
 
 // GeneralResponseWithUser defines model for GeneralResponseWithUser.

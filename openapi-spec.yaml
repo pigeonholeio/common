@@ -33,13 +33,6 @@ x-common-objects:
   
 components:
   responses:
-    OIDCProviders:
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/OIDCProviders'
-      description: A Secret object
-
     CreateSecretResponse:
       content:
         application/json:
@@ -74,6 +67,19 @@ components:
               $ref: '#/components/schemas/Secret'
             type: array
       description: An array of User objects
+    GeneralResponseWithOIDCProviders:
+      description: General Message Response
+      content:
+        application/json:
+          schema:
+            allOf:
+            - $ref: '#/components/schemas/GeneralMessageResponse'
+            - type: object
+              properties:
+                keys:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/OIDCProvider'
     GeneralResponseWithKeys:
       description: General Message Response
       content:
@@ -135,14 +141,19 @@ components:
             user:
               $ref: '#/components/schemas/User'
 
-    OIDCProviders:
+    OIDCProvider:
       type: object
       properties:
         fields:
           type: object
           properties:
-            key:
+            name:
               type: string
+            deviceEndpoint:
+              type: string
+            tokenHandlerEndpoint:
+              type: string
+        
     CreateSecretResponse:
       type: object
       properties:
@@ -297,6 +308,8 @@ paths:
       responses:
         '200':
           description: This generates a list of available OIDC providers
+          $ref: '#/components/responses/GeneralResponseWithOIDCProviders'
+        <<: *commonErrors
   /auth/oidc/token-handler:
     get:
       responses:
