@@ -83,8 +83,8 @@ type User struct {
 // GeneralResponseWithUser defines model for GeneralResponseWithUser.
 type GeneralResponseWithUser struct {
 	Code    *float32 `json:"code"`
-	Data    *User    `json:"data,omitempty"`
 	Message *string  `json:"message"`
+	User    *User    `json:"user,omitempty"`
 }
 
 // Keys defines model for Keys.

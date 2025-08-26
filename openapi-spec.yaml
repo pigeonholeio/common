@@ -83,7 +83,7 @@ components:
             - $ref: '#/components/schemas/GeneralMessageResponse'
             - type: object
               properties:
-                data:
+                user:
                   $ref: '#/components/schemas/User'
 
             # $ref: '#/components/schemas/GeneralResponse'
