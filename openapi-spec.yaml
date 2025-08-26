@@ -76,9 +76,7 @@ components:
       content:
         application/json:
           schema:
-            allOf:
-              - $ref: '#/components/schemas/User'
-              - $ref: '#/components/schemas/GeneralResponse'
+            $ref: '#/components/schemas/GeneralResponseWithUser'
 
           # schema:
           #   $ref: '#/components/schemas/GeneralResponseWithUser'

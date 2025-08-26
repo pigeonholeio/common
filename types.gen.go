@@ -44,6 +44,14 @@ type GeneralResponse struct {
 	Message string `json:"message"`
 }
 
+// GeneralResponseWithUser defines model for GeneralResponseWithUser.
+type GeneralResponseWithUser struct {
+	Fields *struct {
+		Message *string `json:"message,omitempty"`
+		User    *User   `json:"user,omitempty"`
+	} `json:"fields,omitempty"`
+}
+
 // Key defines model for Key.
 type Key struct {
 	CreatedAt  *string             `json:"created_at,omitempty"`
@@ -76,15 +84,6 @@ type User struct {
 	Email     *string             `json:"email,omitempty"`
 	Id        *openapi_types.UUID `json:"id,omitempty"`
 	Keys      *[]Key              `json:"keys,omitempty"`
-	Shortcode *string             `json:"shortcode,omitempty"`
-}
-
-// GeneralResponseWithUser defines model for GeneralResponseWithUser.
-type GeneralResponseWithUser struct {
-	Email     *string             `json:"email,omitempty"`
-	Id        *openapi_types.UUID `json:"id,omitempty"`
-	Keys      *[]Key              `json:"keys,omitempty"`
-	Message   string              `json:"message"`
 	Shortcode *string             `json:"shortcode,omitempty"`
 }
 
