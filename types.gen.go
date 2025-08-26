@@ -90,10 +90,10 @@ type User struct {
 
 // GeneralMessageWithOIDCProvidersResponse defines model for GeneralMessageWithOIDCProvidersResponse.
 type GeneralMessageWithOIDCProvidersResponse struct {
-	Code    *int            `json:"code"`
-	Default *string         `json:"default,omitempty"`
-	Keys    *[]OIDCProvider `json:"keys,omitempty"`
-	Message *string         `json:"message"`
+	Code          *int            `json:"code"`
+	Default       *string         `json:"default,omitempty"`
+	Message       *string         `json:"message"`
+	OidcProviders *[]OIDCProvider `json:"oidcProviders,omitempty"`
 }
 
 // GeneralMessageWithUserResponse defines model for GeneralMessageWithUserResponse.

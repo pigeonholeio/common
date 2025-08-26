@@ -76,7 +76,7 @@ components:
             - $ref: '#/components/schemas/GeneralMessageResponse'
             - type: object
               properties:
-                keys:
+                oidcProviders:
                   type: array
                   items:
                     $ref: '#/components/schemas/OIDCProvider'
