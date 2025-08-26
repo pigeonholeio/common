@@ -88,6 +88,13 @@ type User struct {
 	Shortcode *string             `json:"shortcode,omitempty"`
 }
 
+// GeneralMessageWithOIDCProvidersResponse defines model for GeneralMessageWithOIDCProvidersResponse.
+type GeneralMessageWithOIDCProvidersResponse struct {
+	Code    *float32        `json:"code"`
+	Keys    *[]OIDCProvider `json:"keys,omitempty"`
+	Message *string         `json:"message"`
+}
+
 // GeneralMessageWithUserResponse defines model for GeneralMessageWithUserResponse.
 type GeneralMessageWithUserResponse struct {
 	Code    *float32 `json:"code"`
@@ -100,13 +107,6 @@ type GeneralResponseWithKeys struct {
 	Code    *float32 `json:"code"`
 	Keys    *[]Key   `json:"keys,omitempty"`
 	Message *string  `json:"message"`
-}
-
-// GeneralResponseWithOIDCProviders defines model for GeneralResponseWithOIDCProviders.
-type GeneralResponseWithOIDCProviders struct {
-	Code    *float32        `json:"code"`
-	Keys    *[]OIDCProvider `json:"keys,omitempty"`
-	Message *string         `json:"message"`
 }
 
 // Keys defines model for Keys.

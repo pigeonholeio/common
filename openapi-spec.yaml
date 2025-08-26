@@ -67,7 +67,7 @@ components:
               $ref: '#/components/schemas/Secret'
             type: array
       description: An array of User objects
-    GeneralResponseWithOIDCProviders:
+    GeneralMessageWithOIDCProvidersResponse:
       description: General Message Response
       content:
         application/json:
@@ -311,7 +311,7 @@ paths:
       responses:
         '200':
           description: This generates a list of available OIDC providers
-          $ref: '#/components/responses/GeneralResponseWithOIDCProviders'
+          $ref: '#/components/responses/GeneralMessageWithOIDCProvidersResponse'
         <<: *commonErrors
   /auth/oidc/token-handler:
     get:
