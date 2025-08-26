@@ -79,6 +79,9 @@ type User struct {
 	Shortcode *string             `json:"shortcode,omitempty"`
 }
 
+// GeneralResponse defines model for GeneralResponse.
+type GeneralResponse = GeneralErrorResponse
+
 // Keys defines model for Keys.
 type Keys = []Key
 

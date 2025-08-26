@@ -14,15 +14,14 @@ tags:
     name: user
   - description: Everything relating to the user auth
     name: auth
-x-commonErrorResponses:
-  '400': &ref_0
-    $ref: '#/components/responses/GeneralErrorResponse'
-  '401': &ref_1
-    $ref: '#/components/responses/GeneralErrorResponse'
-  '403': &ref_2
-    $ref: '#/components/responses/GeneralErrorResponse'
-  '500': &ref_3
-    $ref: '#/components/responses/GeneralErrorResponse'
+x-common-objects:
+  common: &commonResponse
+    $ref: '#/components/responses/GeneralResponse'
+  commonErrors: &commonErrors
+    '401': *commonResponse
+    '403': *commonResponse
+    '500': *commonResponse
+  
 components:
   responses:
     CreateSecretResponse:
@@ -59,7 +58,7 @@ components:
               $ref: '#/components/schemas/Secret'
             type: array
       description: An array of User objects
-    GeneralErrorResponse:
+    GeneralResponse:
       description: General Error Response
       content:
         application/json:
@@ -236,10 +235,7 @@ paths:
       responses:
         '200':
           description: This is where the cli will post the ID token from the OIDC provider
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
-        '500': *ref_3
+        <<: *commonErrors
       summary: Generic ID Token handler to be exchanged for a Pigeonhole token
   /secret:
     delete:
@@ -253,10 +249,7 @@ paths:
       responses:
         '204':
           description: Delete on a resource is successful
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
-        '500': *ref_3
+        <<: *commonErrors
       security:
         - BearerAuth: []
       tags:
@@ -273,10 +266,7 @@ paths:
         '200':
           $ref: '#/components/responses/Secrets'
           description: Successfully retrieved items
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
-        '500': *ref_3
+        <<: *commonErrors
       security:
         - BearerAuth: []
       summary: Get my secrets
@@ -293,13 +283,7 @@ paths:
       responses:
         '201':
           $ref: '#/components/responses/CreateSecretResponse'
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
-        '404':
-          description: User not found
-          $ref: '#/components/responses/GeneralErrorResponse'
-        '500': *ref_3
+        <<: *commonErrors
       security:
         - BearerAuth: []
       tags:
@@ -318,10 +302,7 @@ paths:
       responses:
         '200':
           description: Successfully retrieved items
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
-        '500': *ref_3
+        <<: *commonErrors
       security:
         - BearerAuth: []
       tags:
@@ -338,10 +319,7 @@ paths:
         '200':
           $ref: '#/components/responses/Secret'
           description: Successfully retrieved items
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
-        '500': *ref_3
+        <<: *commonErrors
       security:
         - BearerAuth: []
       summary: Get secret by id or shortcode. This will include the presignedurl
@@ -359,10 +337,7 @@ paths:
       responses:
         '307':
           description: Redirect to the file download URL
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
-        '500': *ref_3
+        <<: *commonErrors
       security:
         - BearerAuth: []
       tags:
@@ -382,10 +357,7 @@ paths:
         '200':
           $ref: '#/components/responses/Users'
           description: Successfully retrieved users
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
-        '500': *ref_3
+        <<: *commonErrors
       security:
         - BearerAuth: []
       summary: Retrieve all items from the given schema
@@ -398,10 +370,7 @@ paths:
         '200':
           $ref: '#/components/responses/User'
           description: Successfully retrieved items
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
-        '500': *ref_3
+        <<: *commonErrors
       security:
         - BearerAuth: []
       summary: Get my user object
@@ -413,10 +382,7 @@ paths:
       responses:
         '204':
           description: Successfully rotated shortcode
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
-        '500': *ref_3
+        <<: *commonErrors
       security:
         - BearerAuth: []
       summary: Get my user object
@@ -429,10 +395,7 @@ paths:
         '200':
           $ref: '#/components/responses/Keys'
           description: Successfully retrieved items
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
-        '500': *ref_3
+        <<: *commonErrors
       security:
         - BearerAuth: []
       summary: Get my user object
@@ -445,10 +408,7 @@ paths:
         '201':
           $ref: '#/components/responses/Key'
           description: Successfully uploaded key
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
-        '500': *ref_3
+        <<: *commonErrors
       requestBody:
         required: true
         content:
@@ -473,12 +433,9 @@ paths:
       responses:
         '200':
           description: Successfully retrieved items
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
         '404':
           description: No key found
-        '500': *ref_3
+        <<: *commonErrors
       security:
         - BearerAuth: []
       summary: Get my user object
@@ -498,10 +455,7 @@ paths:
         '200':
           description: Successfully retrieved items
           $ref: '#/components/responses/User'
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
-        '500': *ref_3
+        <<: *commonErrors
       security:
         - BearerAuth: []
       summary: Get my user object
@@ -520,10 +474,7 @@ paths:
         '200':
           description: Return a list of keys
           $ref: '#/components/responses/Keys'
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
-        '500': *ref_3
+        <<: *commonErrors
       security:
         - BearerAuth: []
       summary: Get my user object
@@ -546,10 +497,6 @@ paths:
       responses:
         '201':
           description: OK
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
-        '500': *ref_3
       security:
         - BearerAuth: []
       tags:
@@ -578,10 +525,7 @@ paths:
       responses:
         '200':
           description: OK
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
-        '500': *ref_3
+        <<: *commonErrors
       security:
         - BearerAuth: []
       tags:
@@ -609,19 +553,7 @@ paths:
       responses:
         '200':
           description: OK
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
-        '500': *ref_3
-        #   $ref: '#/components/responses/UnauthorizedError'
-        # '404':
-        #   $ref: '#/components/responses/UnauthorizedError'
-        # '403':
-        # '400':
-        #   $ref: '#/components/responses/GeneralError'
-        # '401':
-        #   $ref: '#/components/responses/UnauthorizedError'
-        #   description: Secret not found
+        <<: *commonErrors
       security:
         - BearerAuth: []
       tags:
@@ -639,10 +571,7 @@ paths:
       responses:
         '200':
           description: Successfully retrieved items
-        '400': *ref_0
-        '401': *ref_1
-        '403': *ref_2
-        '500': *ref_3
+        <<: *commonErrors
       summary: Retrieve all public information about a user
       tags:
         - user
