@@ -24,6 +24,13 @@ x-common-objects:
   
 components:
   responses:
+    OIDCProviders:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/OIDCProviders'
+      description: A Secret object
+
     CreateSecretResponse:
       content:
         application/json:
@@ -85,6 +92,15 @@ components:
             type: array
       description: An array of User objects
   schemas:
+    OIDCProviders:
+      type: object
+      properties:
+        fields:
+          type: object
+          properties:
+            key:
+              type: string
+          
     CreateSecretResponse:
       type: object
       properties:
@@ -230,13 +246,19 @@ components:
       type: http
       scheme: bearer
 paths:
-  /auth/token-handler:
+  /auth/oidc/providers:
+    get:
+      responses:
+        '200':
+          description: This generates a list of available OIDC providers
+  /auth/oidc/token-handler:
     get:
       responses:
         '200':
           description: This is where the cli will post the ID token from the OIDC provider
         <<: *commonErrors
       summary: Generic ID Token handler to be exchanged for a Pigeonhole token
+
   /secret:
     delete:
       description: Delete all the users secrets
