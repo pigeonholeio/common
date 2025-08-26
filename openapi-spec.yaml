@@ -16,9 +16,16 @@ tags:
     name: auth
 x-common-objects:
   commonResponses: &commonResponse
-    $ref: '#/components/responses/Secrets'
-    description: Successfully retrieved items
-    # $ref: '#/components/schemas/GeneralMessageResponse'
+      content:
+        application/json:
+          schema:
+            items:
+              $ref: '#/components/schemas/GeneralMessageResponse'
+            type: array
+      description: An array of User objects
+    # $ref: '#/components/responses/Secrets'
+    # description: Successfully retrieved items
+    # $ref: '#/components//GeneralMessageResponse'
   commonResonseErrors: &commonErrors
     '401': *commonResponse
     '403': *commonResponse
