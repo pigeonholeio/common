@@ -20,8 +20,8 @@ generate:
 	
 	@echo "Generating API server fiber stubs..."
 	@mkdir -p ../server/src/stub
-	@$(OAPI_CODEGEN) --package stub -generate fiber -o ../server/src/stub/server.gen.go $(OPENAPI_SPEC)
-	@$(OAPI_CODEGEN) --package stub -generate types -o ../server/src/stub/types.gen.go $(OPENAPI_SPEC)
+	@$(OAPI_CODEGEN) --package sdk -generate fiber -o ../server/src/stub/server.gen.go $(OPENAPI_SPEC)
+	@$(OAPI_CODEGEN) --package sdk -generate types -o ../server/src/stub/types.gen.go $(OPENAPI_SPEC)
 	@$(OAPI_CODEGEN) --package sdk -generate client -o ../cli/src/sdk/client.gen.go $(OPENAPI_SPEC)
 	@$(OAPI_CODEGEN) --package sdk -generate types -o ../cli/src/sdk/types.gen.go $(OPENAPI_SPEC)
 	
