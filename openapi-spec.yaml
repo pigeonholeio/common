@@ -86,7 +86,7 @@ components:
               properties:
                 default:
                   type: string
-    GeneralResponseWithKeys:
+    GeneralMessageWithKeysResponse:
       description: General Message Response
       content:
         application/json:
@@ -484,7 +484,7 @@ paths:
       description: Get my user object
       responses:
         '200':
-          $ref: '#/components/responses/GeneralResponseWithKeys'
+          $ref: '#/components/responses/GeneralMessageWithKeysResponse'
           description: Successfully retrieved items
         <<: *commonErrors
       security:
