@@ -297,7 +297,7 @@ components:
           type: string
           nullable: true
         code:
-          type: number
+          type: integer
           nullable: true
       required:
         - message

@@ -41,8 +41,8 @@ type CreateSecretResponse struct {
 
 // GeneralMessageResponse defines model for GeneralMessageResponse.
 type GeneralMessageResponse struct {
-	Code    *float32 `json:"code"`
-	Message *string  `json:"message"`
+	Code    *int    `json:"code"`
+	Message *string `json:"message"`
 }
 
 // Key defines model for Key.
@@ -90,23 +90,23 @@ type User struct {
 
 // GeneralMessageWithOIDCProvidersResponse defines model for GeneralMessageWithOIDCProvidersResponse.
 type GeneralMessageWithOIDCProvidersResponse struct {
-	Code    *float32        `json:"code"`
+	Code    *int            `json:"code"`
 	Keys    *[]OIDCProvider `json:"keys,omitempty"`
 	Message *string         `json:"message"`
 }
 
 // GeneralMessageWithUserResponse defines model for GeneralMessageWithUserResponse.
 type GeneralMessageWithUserResponse struct {
-	Code    *float32 `json:"code"`
-	Message *string  `json:"message"`
-	User    *User    `json:"user,omitempty"`
+	Code    *int    `json:"code"`
+	Message *string `json:"message"`
+	User    *User   `json:"user,omitempty"`
 }
 
 // GeneralResponseWithKeys defines model for GeneralResponseWithKeys.
 type GeneralResponseWithKeys struct {
-	Code    *float32 `json:"code"`
-	Keys    *[]Key   `json:"keys,omitempty"`
-	Message *string  `json:"message"`
+	Code    *int    `json:"code"`
+	Keys    *[]Key  `json:"keys,omitempty"`
+	Message *string `json:"message"`
 }
 
 // Keys defines model for Keys.
