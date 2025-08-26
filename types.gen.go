@@ -39,8 +39,8 @@ type CreateSecretResponse struct {
 	Users *[]User `json:"users,omitempty"`
 }
 
-// GeneralErrorResponse defines model for GeneralErrorResponse.
-type GeneralErrorResponse struct {
+// GeneralResponse defines model for GeneralResponse.
+type GeneralResponse struct {
 	Message string `json:"message"`
 }
 
@@ -78,9 +78,6 @@ type User struct {
 	Keys      *[]Key              `json:"keys,omitempty"`
 	Shortcode *string             `json:"shortcode,omitempty"`
 }
-
-// GeneralResponse defines model for GeneralResponse.
-type GeneralResponse = GeneralErrorResponse
 
 // Keys defines model for Keys.
 type Keys = []Key

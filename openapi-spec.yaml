@@ -70,7 +70,18 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/GeneralErrorResponse'
+            $ref: '#/components/schemas/GeneralResponse'
+    GeneralResponseWithUser:
+      description: General Error Response
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/User'
+              - $ref: '#/components/schemas/GeneralResponse'
+
+          # schema:
+          #   $ref: '#/components/schemas/GeneralResponseWithUser'
     Token:
       content:
         application/json:
@@ -92,6 +103,15 @@ components:
             type: array
       description: An array of User objects
   schemas:
+    GeneralResponseWithUser:
+      type: object
+      properties:
+        fields:
+          type: object
+          properties:
+            key:
+              type: string
+
     OIDCProviders:
       type: object
       properties:
@@ -100,7 +120,6 @@ components:
           properties:
             key:
               type: string
-          
     CreateSecretResponse:
       type: object
       properties:
@@ -234,7 +253,7 @@ components:
           type: string
       required:
         - username
-    GeneralErrorResponse:
+    GeneralResponse:
       type: object
       properties:
         message:
