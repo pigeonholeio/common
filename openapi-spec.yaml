@@ -80,6 +80,10 @@ components:
                   type: array
                   items:
                     $ref: '#/components/schemas/OIDCProvider'
+            - type: object
+              properties:
+                default:
+                  type: string
     GeneralResponseWithKeys:
       description: General Message Response
       content:
