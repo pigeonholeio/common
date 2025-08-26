@@ -93,7 +93,7 @@ components:
                   type: array
                   items:
                     $ref: '#/components/schemas/Key'
-    GeneralResponseWithUser:
+    GeneralMessageWithUserResponse:
       description: General Message Response
       content:
         application/json:
@@ -108,7 +108,7 @@ components:
             # $ref: '#/components/schemas/GeneralResponse'
 
           # schema:
-          #   $ref: '#/components/schemas/GeneralResponseWithUser'
+          #   $ref: '#/components/schemas/GeneralMessageWithUserResponse'
     Token:
       content:
         application/json:
@@ -130,7 +130,7 @@ components:
             type: array
       description: An array of User objects
   schemas:
-    GeneralResponseWithUser:
+    GeneralMessageWithUserResponse:
       type: object
       properties:
         fields:
@@ -452,7 +452,7 @@ paths:
       description: Get my user object
       responses:
         '200':
-          $ref: '#/components/responses/GeneralResponseWithUser'
+          $ref: '#/components/responses/GeneralMessageWithUserResponse'
           description: Successfully retrieved items
         <<: *commonErrors
       security:
