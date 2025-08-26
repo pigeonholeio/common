@@ -109,8 +109,10 @@ components:
         fields:
           type: object
           properties:
-            key:
+            message:
               type: string
+            user:
+              $ref: '#/components/schemas/User'
 
     OIDCProviders:
       type: object
