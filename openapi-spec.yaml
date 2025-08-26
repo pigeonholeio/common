@@ -144,15 +144,15 @@ components:
     OIDCProvider:
       type: object
       properties:
-        fields:
-          type: object
-          properties:
-            name:
-              type: string
-            deviceEndpoint:
-              type: string
-            tokenHandlerEndpoint:
-              type: string
+        name:
+          type: string
+          nullable: false
+        deviceEndpoint:
+          type: string
+          nullable: false
+        tokenHandlerEndpoint:
+          type: string
+          nullable: false
         
     CreateSecretResponse:
       type: object

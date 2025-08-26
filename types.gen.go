@@ -65,11 +65,9 @@ type NewKey struct {
 
 // OIDCProvider defines model for OIDCProvider.
 type OIDCProvider struct {
-	Fields *struct {
-		DeviceEndpoint       *string `json:"deviceEndpoint,omitempty"`
-		Name                 *string `json:"name,omitempty"`
-		TokenHandlerEndpoint *string `json:"tokenHandlerEndpoint,omitempty"`
-	} `json:"fields,omitempty"`
+	DeviceEndpoint       *string `json:"deviceEndpoint,omitempty"`
+	Name                 *string `json:"name,omitempty"`
+	TokenHandlerEndpoint *string `json:"tokenHandlerEndpoint,omitempty"`
 }
 
 // Secret defines model for Secret.
