@@ -81,10 +81,12 @@ components:
           schema:
             allOf:
             - $ref: '#/components/schemas/GeneralMessageResponse'
-            - type: array
+            - type: object
               properties:
                 keys:
-                  $ref: '#/components/schemas/Key'
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Key'
     GeneralResponseWithUser:
       description: General Message Response
       content:
@@ -459,7 +461,7 @@ paths:
       description: Get my user object
       responses:
         '200':
-          $ref: '#/components/responses/Keys'
+          $ref: '#/components/responses/GeneralResponseWithKeys'
           description: Successfully retrieved items
         <<: *commonErrors
       security:

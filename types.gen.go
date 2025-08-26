@@ -80,6 +80,13 @@ type User struct {
 	Shortcode *string             `json:"shortcode,omitempty"`
 }
 
+// GeneralResponseWithKeys defines model for GeneralResponseWithKeys.
+type GeneralResponseWithKeys struct {
+	Code    *float32 `json:"code"`
+	Keys    *[]Key   `json:"keys,omitempty"`
+	Message *string  `json:"message"`
+}
+
 // GeneralResponseWithUser defines model for GeneralResponseWithUser.
 type GeneralResponseWithUser struct {
 	Code    *float32 `json:"code"`
