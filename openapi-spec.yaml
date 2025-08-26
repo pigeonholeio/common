@@ -150,6 +150,9 @@ components:
         deviceEndpoint:
           type: string
           nullable: false
+        clientID:
+          type: string
+          nullable: false
         tokenHandlerEndpoint:
           type: string
           nullable: false

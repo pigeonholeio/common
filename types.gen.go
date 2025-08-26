@@ -65,6 +65,7 @@ type NewKey struct {
 
 // OIDCProvider defines model for OIDCProvider.
 type OIDCProvider struct {
+	ClientID             *string `json:"clientID,omitempty"`
 	DeviceEndpoint       *string `json:"deviceEndpoint,omitempty"`
 	Name                 *string `json:"name,omitempty"`
 	TokenHandlerEndpoint *string `json:"tokenHandlerEndpoint,omitempty"`
