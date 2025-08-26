@@ -10,10 +10,15 @@ servers:
   - description: Localhost Dev
     url: http://localhost:3000/v1/
 tags:
-  - description: Everything relating to the User
+  - description: Everything relating to the user
     name: user
   - description: Everything relating to the user auth
-    name: auth
+    name: Auth
+  - description: Everything relating to secrets
+    name: Secret
+  - description: Things relating to an OIDCProvider config
+    name: OIDCProvider
+  
 x-common-objects:
   commonResponses: &commonResponse
       content:
@@ -22,7 +27,7 @@ x-common-objects:
             items:
               $ref: '#/components/schemas/GeneralMessageResponse'
             type: array
-      description: An array of User objects
+      description: An object containing a common response layout
     # $ref: '#/components/responses/Secrets'
     # description: Successfully retrieved items
     # $ref: '#/components//GeneralMessageResponse'
@@ -66,7 +71,7 @@ components:
             items:
               $ref: '#/components/schemas/Secret'
             type: array
-      description: An array of User objects
+      description: Secret Response object
     GeneralMessageWithOIDCProvidersResponse:
       description: General Message Response
       content:
@@ -328,6 +333,10 @@ components:
 paths:
   /auth/oidc/providers:
     get:
+      tags:
+        - OIDCProvider
+        - Auth
+      summary: List providers
       responses:
         '200':
           description: This generates a list of available OIDC providers
