@@ -99,6 +99,19 @@ components:
                   type: array
                   items:
                     $ref: '#/components/schemas/Key'
+    GeneralMessageWithKeyResponse:
+      description: General Message Response
+      content:
+        application/json:
+          schema:
+            allOf:
+            - $ref: '#/components/schemas/GeneralMessageResponse'
+            - type: object
+              properties:
+                keys:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Key'
     GeneralMessageWithUserResponse:
       description: General Message Response
       content:
