@@ -4,6 +4,8 @@
 package sdk
 
 import (
+	"time"
+
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
@@ -47,7 +49,7 @@ type GeneralMessageResponse struct {
 
 // Key defines model for Key.
 type Key struct {
-	CreatedAt  *string             `json:"created_at,omitempty"`
+	CreatedAt  *time.Time          `json:"created_at,omitempty"`
 	Id         *openapi_types.UUID `json:"id,omitempty"`
 	KeyData    *string             `json:"key_data,omitempty"`
 	Reference  *string             `json:"reference,omitempty"`

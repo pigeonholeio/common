@@ -233,6 +233,7 @@ components:
           type: string
         created_at:
           type: string
+          format: date-time
         id:
           format: uuid
           type: string
