@@ -6,9 +6,9 @@ info:
   version: 1.0.0
 servers:
   - description: Production server (uses live data)
-    url: https://api.pigeonhole.io
+    url: https://api.pigeonhole.io/v1/
   - description: Localhost Dev
-    url: http://localhost:3000
+    url: http://localhost:3000/v1/
 tags:
   - description: Everything relating to the User
     name: user
