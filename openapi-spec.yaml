@@ -74,6 +74,17 @@ components:
               $ref: '#/components/schemas/Secret'
             type: array
       description: An array of User objects
+    GeneralResponseWithKey:
+      description: General Message Response
+      content:
+        application/json:
+          schema:
+            allOf:
+            - $ref: '#/components/schemas/GeneralMessageResponse'
+            - type: object
+              properties:
+                key:
+                  $ref: '#/components/schemas/Key'
     GeneralResponseWithUser:
       description: General Message Response
       content:
