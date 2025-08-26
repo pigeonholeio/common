@@ -409,7 +409,7 @@ paths:
       description: Get my user object
       responses:
         '200':
-          $ref: '#/components/responses/User'
+          $ref: '#/components/responses/GeneralResponseWithUser'
           description: Successfully retrieved items
         <<: *commonErrors
       security:
