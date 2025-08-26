@@ -11,13 +11,13 @@ servers:
     url: http://localhost:3000/v1/
 tags:
   - description: Everything relating to the user
-    name: user
+    name: User
   - description: Everything relating to the user auth
     name: Auth
-  - description: Everything relating to secrets
+  - description: Endpoints relating to secrets
     name: Secret
-  - description: Things relating to an OIDCProvider config
-    name: OIDCProvider
+  - description: Endpoints relating to OIDC
+    name: OIDC
   
 x-common-objects:
   commonResponses: &commonResponse
@@ -334,7 +334,6 @@ paths:
   /auth/oidc/providers:
     get:
       tags:
-        - OIDCProvider
         - Auth
       summary: List providers
       responses:
@@ -344,6 +343,8 @@ paths:
         <<: *commonErrors
   /auth/oidc/token-handler:
     get:
+      tags:
+        - Auth
       responses:
         '200':
           description: This is where the cli will post the ID token from the OIDC provider
@@ -352,6 +353,8 @@ paths:
 
   /secret:
     delete:
+      tags:
+        - Secret
       description: Delete all the users secrets
       parameters:
         - in: query
@@ -365,8 +368,7 @@ paths:
         <<: *commonErrors
       security:
         - BearerAuth: []
-      tags:
-        - secret
+
     get:
       description: Get my secrets
       parameters:
@@ -384,7 +386,7 @@ paths:
         - BearerAuth: []
       summary: Get my secrets
       tags:
-        - key
+        - Secret
     post:
       description: Generates a presigned url
       requestBody:
@@ -400,10 +402,11 @@ paths:
       security:
         - BearerAuth: []
       tags:
-        - key
-        - user
+        - Secret
   /secret/{secret_id}:
     delete:
+      tags:
+        - Secret
       description: Delete a particular secret
       summary: Delete a particular secret
       parameters:
@@ -418,8 +421,6 @@ paths:
         <<: *commonErrors
       security:
         - BearerAuth: []
-      tags:
-        - secret
     get:
       description: Get a secret by id or reference
       parameters:
@@ -437,7 +438,7 @@ paths:
         - BearerAuth: []
       summary: Get secret by id or shortcode. This will include the presignedurl
       tags:
-        - key
+        - Secret
   /secret/{secret_id}/download:
     get:
       description: Redirects the request to the S3 presigned URL for download
@@ -454,7 +455,7 @@ paths:
       security:
         - BearerAuth: []
       tags:
-        - secret
+        - Secret
   /user:
     get:
       description: Retrieve a list of users given a query e.g. user email, shortcode or id
@@ -475,7 +476,7 @@ paths:
         - BearerAuth: []
       summary: Retrieve all items from the given schema
       tags:
-        - user
+        - User
   /user/me:
     get:
       description: Get my user object
@@ -488,7 +489,7 @@ paths:
         - BearerAuth: []
       summary: Get my user object
       tags:
-        - user
+        - User
   /user/me/rotate-shortcode:
     post:
       description: Rotate users short code to remain anonymous
@@ -500,7 +501,7 @@ paths:
         - BearerAuth: []
       summary: Get my user object
       tags:
-        - user
+        - User
   /user/me/key:
     get:
       description: Get my user object
@@ -513,8 +514,8 @@ paths:
         - BearerAuth: []
       summary: Get my user object
       tags:
-        - user
-        - key
+        - User
+        - Key
     post:
       description: Create new keys
       responses:
@@ -532,8 +533,8 @@ paths:
         - BearerAuth: []
       summary: Get my user object
       tags:
-        - user
-        - key
+        - User
+        - Key
   /user/me/key/validate/{thumbprint}:
     get:
       description: Get users key by thumbprint
@@ -553,8 +554,8 @@ paths:
         - BearerAuth: []
       summary: Get my user object
       tags:
-        - user
-        - key
+        - User
+        - Key
   /user/{user_id}:
     get:
       description: Get users' keys
@@ -573,7 +574,7 @@ paths:
         - BearerAuth: []
       summary: Get my user object
       tags:
-        - user
+        - User
   /user/{user_id}/key:
     get:
       description: Get users' keys
@@ -592,7 +593,8 @@ paths:
         - BearerAuth: []
       summary: Get my user object
       tags:
-        - key
+        - Key
+        - User
     post:
       description: r
       parameters:
@@ -613,8 +615,8 @@ paths:
       security:
         - BearerAuth: []
       tags:
-        - key
-        - user
+        - Key
+        - User
   /user/{user_id}/key/{key_id}/key:
     delete:
       description: r
@@ -642,8 +644,8 @@ paths:
       security:
         - BearerAuth: []
       tags:
-        - key
-        - user
+        - Key
+        - User
     get:
       description: r
       parameters:
@@ -670,8 +672,8 @@ paths:
       security:
         - BearerAuth: []
       tags:
-        - key
-        - user
+        - Key
+        - User
   /user/{user_id}/public:
     get:
       description: Either a users email or id to retrieve public information
@@ -687,4 +689,4 @@ paths:
         <<: *commonErrors
       summary: Retrieve all public information about a user
       tags:
-        - user
+        - User
