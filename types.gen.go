@@ -39,17 +39,10 @@ type CreateSecretResponse struct {
 	Users *[]User `json:"users,omitempty"`
 }
 
-// GeneralResponse defines model for GeneralResponse.
-type GeneralResponse struct {
-	Message string `json:"message"`
-}
-
-// GeneralResponseWithUser defines model for GeneralResponseWithUser.
-type GeneralResponseWithUser struct {
-	Fields *struct {
-		Message *string `json:"message,omitempty"`
-		User    *User   `json:"user,omitempty"`
-	} `json:"fields,omitempty"`
+// GeneralMessageResponse defines model for GeneralMessageResponse.
+type GeneralMessageResponse struct {
+	Code    *float32 `json:"code"`
+	Message *string  `json:"message"`
 }
 
 // Key defines model for Key.
@@ -85,6 +78,13 @@ type User struct {
 	Id        *openapi_types.UUID `json:"id,omitempty"`
 	Keys      *[]Key              `json:"keys,omitempty"`
 	Shortcode *string             `json:"shortcode,omitempty"`
+}
+
+// GeneralResponseWithUser defines model for GeneralResponseWithUser.
+type GeneralResponseWithUser struct {
+	Code    *float32 `json:"code"`
+	Data    *User    `json:"data,omitempty"`
+	Message *string  `json:"message"`
 }
 
 // Keys defines model for Keys.

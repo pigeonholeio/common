@@ -15,9 +15,11 @@ tags:
   - description: Everything relating to the user auth
     name: auth
 x-common-objects:
-  common: &commonResponse
-    $ref: '#/components/responses/GeneralResponse'
-  commonErrors: &commonErrors
+  commonResponses: &commonResponse
+    $ref: '#/components/responses/Secrets'
+    description: Successfully retrieved items
+    # $ref: '#/components/schemas/GeneralMessageResponse'
+  commonResonseErrors: &commonErrors
     '401': *commonResponse
     '403': *commonResponse
     '500': *commonResponse
@@ -65,18 +67,19 @@ components:
               $ref: '#/components/schemas/Secret'
             type: array
       description: An array of User objects
-    GeneralResponse:
-      description: General Error Response
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/GeneralResponse'
     GeneralResponseWithUser:
-      description: General Error Response
+      description: General Message Response
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/GeneralResponseWithUser'
+            allOf:
+            - $ref: '#/components/schemas/GeneralMessageResponse'
+            - type: object
+              properties:
+                data:
+                  $ref: '#/components/schemas/User'
+
+            # $ref: '#/components/schemas/GeneralResponse'
 
           # schema:
           #   $ref: '#/components/schemas/GeneralResponseWithUser'
@@ -253,11 +256,15 @@ components:
           type: string
       required:
         - username
-    GeneralResponse:
+    GeneralMessageResponse:
       type: object
       properties:
         message:
           type: string
+          nullable: true
+        code:
+          type: number
+          nullable: true
       required:
         - message
   securitySchemes:
