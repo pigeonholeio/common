@@ -26,7 +26,7 @@ x-common-objects:
           schema:
             items:
               $ref: '#/components/schemas/GeneralMessage'
-            type: array
+            type: object
       description: An object containing a common response layout
     # $ref: '#/components/responses/Secrets'
     # description: Successfully retrieved items
@@ -287,9 +287,6 @@ components:
       type: object
     Secret:
       properties:
-        # id:
-        #   format: uuid
-        #   type: string
         reference:
           type: string
         recipient:
