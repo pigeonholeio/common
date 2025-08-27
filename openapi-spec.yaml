@@ -396,8 +396,8 @@ paths:
             type: string
       responses:
         '200':
-          $ref: '#/components/responses/Secrets'
-          description: Successfully retrieved items
+          $ref: '#/components/responses/GeneralMessageWithSecretsResponse'
+          description: Retrieve secrets sent to user
         <<: *commonErrors
       security:
         - BearerAuth: []

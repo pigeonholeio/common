@@ -108,6 +108,13 @@ type GeneralMessageWithOIDCProvidersResponse struct {
 	OidcProviders *map[string]OIDCProvider `json:"oidcProviders,omitempty"`
 }
 
+// GeneralMessageWithSecretsResponse defines model for GeneralMessageWithSecretsResponse.
+type GeneralMessageWithSecretsResponse struct {
+	Code    *int      `json:"code"`
+	Message *string   `json:"message"`
+	Secrets *[]Secret `json:"secrets,omitempty"`
+}
+
 // GeneralMessageWithUserResponse defines model for GeneralMessageWithUserResponse.
 type GeneralMessageWithUserResponse struct {
 	Code    *int    `json:"code"`
@@ -117,9 +124,6 @@ type GeneralMessageWithUserResponse struct {
 
 // Keys defines model for Keys.
 type Keys = []Key
-
-// Secrets defines model for Secrets.
-type Secrets = []Secret
 
 // Users defines model for Users.
 type Users = []User
