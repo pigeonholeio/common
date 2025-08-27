@@ -192,15 +192,15 @@ components:
         name:
           type: string
           nullable: false
-        deviceEndpoint:
+        providerUrl:
           type: string
           nullable: false
         clientID:
           type: string
           nullable: false
-        tokenHandlerEndpoint:
-          type: string
-          nullable: false
+        # tokenHandlerEndpoint:
+        #   type: string
+        #   nullable: false
         
     CreateSecretResponse:
       type: object
