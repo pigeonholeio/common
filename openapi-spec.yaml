@@ -419,8 +419,9 @@ paths:
           schema:
             type: string
       responses:
-        '200':
-          description: Successfully retrieved items
+        '204':
+          $ref: '#/components/responses/GeneralMessageResponse'
+          description: Deletion of all users rececived secrets is successful
         <<: *commonErrors
       security:
         - BearerAuth: []
