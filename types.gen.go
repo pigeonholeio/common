@@ -41,8 +41,8 @@ type CreateSecretResponse struct {
 	Users *[]User `json:"users,omitempty"`
 }
 
-// GeneralMessageResponse defines model for GeneralMessageResponse.
-type GeneralMessageResponse struct {
+// GeneralMessage defines model for GeneralMessage.
+type GeneralMessage struct {
 	Code    *int    `json:"code"`
 	Message *string `json:"message"`
 }
@@ -90,6 +90,9 @@ type User struct {
 	Shortcode *string             `json:"shortcode,omitempty"`
 }
 
+// GeneralMessageResponse defines model for GeneralMessageResponse.
+type GeneralMessageResponse = GeneralMessage
+
 // GeneralMessageWithKeysResponse defines model for GeneralMessageWithKeysResponse.
 type GeneralMessageWithKeysResponse struct {
 	Code    *int    `json:"code"`
@@ -121,11 +124,6 @@ type Secrets = []Secret
 // Users defines model for Users.
 type Users = []User
 
-// DeleteSecretParams defines parameters for DeleteSecret.
-type DeleteSecretParams struct {
-	Reference *string `form:"reference,omitempty" json:"reference,omitempty"`
-}
-
 // GetSecretParams defines parameters for GetSecret.
 type GetSecretParams struct {
 	Reference *string `form:"reference,omitempty" json:"reference,omitempty"`
@@ -145,8 +143,8 @@ type PostUserMeKeyJSONRequestBody = NewKey
 // PostUserUserIdKeyJSONRequestBody defines body for PostUserUserIdKey for application/json ContentType.
 type PostUserUserIdKeyJSONRequestBody = NewKey
 
-// DeleteUserUserIdKeyKeyIdKeyJSONRequestBody defines body for DeleteUserUserIdKeyKeyIdKey for application/json ContentType.
-type DeleteUserUserIdKeyKeyIdKeyJSONRequestBody = Key
+// DeleteUserUserIdKeyKeyIdJSONRequestBody defines body for DeleteUserUserIdKeyKeyId for application/json ContentType.
+type DeleteUserUserIdKeyKeyIdJSONRequestBody = Key
 
-// GetUserUserIdKeyKeyIdKeyJSONRequestBody defines body for GetUserUserIdKeyKeyIdKey for application/json ContentType.
-type GetUserUserIdKeyKeyIdKeyJSONRequestBody = Key
+// GetUserUserIdKeyKeyIdJSONRequestBody defines body for GetUserUserIdKeyKeyId for application/json ContentType.
+type GetUserUserIdKeyKeyIdJSONRequestBody = Key

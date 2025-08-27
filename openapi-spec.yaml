@@ -25,13 +25,14 @@ x-common-objects:
         application/json:
           schema:
             items:
-              $ref: '#/components/schemas/GeneralMessageResponse'
+              $ref: '#/components/schemas/GeneralMessage'
             type: array
       description: An object containing a common response layout
     # $ref: '#/components/responses/Secrets'
     # description: Successfully retrieved items
     # $ref: '#/components//GeneralMessageResponse'
   commonResonseErrors: &commonErrors
+    '400': *commonResponse
     '401': *commonResponse
     '403': *commonResponse
     '500': *commonResponse
@@ -78,7 +79,7 @@ components:
         application/json:
           schema:
             allOf:
-            - $ref: '#/components/schemas/GeneralMessageResponse'
+            - $ref: '#/components/schemas/GeneralMessage'
             - type: object
               properties:
                 oidcProviders:
@@ -97,20 +98,27 @@ components:
         application/json:
           schema:
             allOf:
-            - $ref: '#/components/schemas/GeneralMessageResponse'
+            - $ref: '#/components/schemas/GeneralMessage'
             - type: object
               properties:
                 keys:
                   type: array
                   items:
                     $ref: '#/components/schemas/Key'
+    GeneralMessageResponse:
+      description: General Message Response
+      content:
+        application/json:
+          schema:
+            allOf:
+            - $ref: '#/components/schemas/GeneralMessage'
     GeneralMessageWithKeyResponse:
       description: General Message Response
       content:
         application/json:
           schema:
             allOf:
-            - $ref: '#/components/schemas/GeneralMessageResponse'
+            - $ref: '#/components/schemas/GeneralMessage'
             - type: object
               properties:
                 keys:
@@ -123,7 +131,7 @@ components:
         application/json:
           schema:
             allOf:
-            - $ref: '#/components/schemas/GeneralMessageResponse'
+            - $ref: '#/components/schemas/GeneralMessage'
             - type: object
               properties:
                 user:
@@ -315,7 +323,7 @@ components:
           type: string
       required:
         - username
-    GeneralMessageResponse:
+    GeneralMessage:
       type: object
       properties:
         message:
@@ -355,16 +363,11 @@ paths:
     delete:
       tags:
         - Secret
-      description: Delete all the users secrets
-      parameters:
-        - in: query
-          name: reference
-          required: false
-          schema:
-            type: string
+      description: Delete all the users received secrets
       responses:
         '204':
-          description: Delete on a resource is successful
+          $ref: '#/components/responses/GeneralMessageResponse'
+          description: Deletion of all users rececived secrets is successful
         <<: *commonErrors
       security:
         - BearerAuth: []
@@ -556,6 +559,32 @@ paths:
       tags:
         - User
         - Key
+  /user/{user_id}/key/validate/{thumbprint}:
+    get:
+      description: Get users key by thumbprint
+      parameters:
+        - in: path
+          name: user_id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: thumbprint
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved items
+        '404':
+          description: No key found
+        <<: *commonErrors
+      security:
+        - BearerAuth: []
+      summary: Get my user object
+      tags:
+        - User
+        - Key
   /user/{user_id}:
     get:
       description: Get users' keys
@@ -617,7 +646,7 @@ paths:
       tags:
         - Key
         - User
-  /user/{user_id}/key/{key_id}/key:
+  /user/{user_id}/key/{key_id}:
     delete:
       description: r
       parameters:
