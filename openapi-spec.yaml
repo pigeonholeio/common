@@ -24,8 +24,7 @@ x-common-objects:
       content:
         application/json:
           schema:
-            items:
-              $ref: '#/components/schemas/GeneralMessage'
+            $ref: '#/components/schemas/GeneralMessage'
             type: object
       description: An object containing a common response layout
     # $ref: '#/components/responses/Secrets'
