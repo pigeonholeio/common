@@ -198,6 +198,9 @@ components:
         tokenUrl:
           type: string
           nullable: false
+        deviceAuthURL:
+          type: string
+          nullable: false
         clientID:
           type: string
           nullable: false
