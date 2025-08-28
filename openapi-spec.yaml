@@ -207,7 +207,6 @@ components:
         scopes:
           type: string
           nullable: false
-          default: openid profile email
         # tokenHandlerEndpoint:
         #   type: string
         #   nullable: false
