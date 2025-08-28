@@ -204,6 +204,10 @@ components:
         clientID:
           type: string
           nullable: false
+        scopes:
+          type: string
+          nullable: false
+          default: openid profile email
         # tokenHandlerEndpoint:
         #   type: string
         #   nullable: false

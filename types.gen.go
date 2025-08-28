@@ -71,6 +71,7 @@ type OIDCProvider struct {
 	ClientID      *string `json:"clientID,omitempty"`
 	DeviceAuthURL *string `json:"deviceAuthURL,omitempty"`
 	Name          *string `json:"name,omitempty"`
+	Scopes        *string `json:"scopes,omitempty"`
 	TokenUrl      *string `json:"tokenUrl,omitempty"`
 }
 
