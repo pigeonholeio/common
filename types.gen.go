@@ -67,9 +67,10 @@ type NewKey struct {
 
 // OIDCProvider defines model for OIDCProvider.
 type OIDCProvider struct {
-	ClientID    *string `json:"clientID,omitempty"`
-	Name        *string `json:"name,omitempty"`
-	ProviderUrl *string `json:"providerUrl,omitempty"`
+	AuthUrl  *string `json:"authUrl,omitempty"`
+	ClientID *string `json:"clientID,omitempty"`
+	Name     *string `json:"name,omitempty"`
+	TokenUrl *string `json:"tokenUrl,omitempty"`
 }
 
 // Secret defines model for Secret.
