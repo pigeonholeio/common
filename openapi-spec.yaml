@@ -205,7 +205,7 @@ components:
           type: string
           nullable: false
         scopes:
-          type: string
+          type: array
           nullable: false
         # tokenHandlerEndpoint:
         #   type: string

@@ -67,12 +67,12 @@ type NewKey struct {
 
 // OIDCProvider defines model for OIDCProvider.
 type OIDCProvider struct {
-	AuthUrl       *string `json:"authUrl,omitempty"`
-	ClientID      *string `json:"clientID,omitempty"`
-	DeviceAuthURL *string `json:"deviceAuthURL,omitempty"`
-	Name          *string `json:"name,omitempty"`
-	Scopes        *string `json:"scopes,omitempty"`
-	TokenUrl      *string `json:"tokenUrl,omitempty"`
+	AuthUrl       *string        `json:"authUrl,omitempty"`
+	ClientID      *string        `json:"clientID,omitempty"`
+	DeviceAuthURL *string        `json:"deviceAuthURL,omitempty"`
+	Name          *string        `json:"name,omitempty"`
+	Scopes        *[]interface{} `json:"scopes,omitempty"`
+	TokenUrl      *string        `json:"tokenUrl,omitempty"`
 }
 
 // Secret defines model for Secret.
