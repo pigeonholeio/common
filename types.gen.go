@@ -84,6 +84,13 @@ type Secret struct {
 	Size      *string `json:"size,omitempty"`
 }
 
+// Token A JWT token created by PigeonHole after the IdP ID Token has been excha
+type Token struct {
+	// AccessToken A JWT token
+	AccessToken string     `json:"accessToken"`
+	ExpiresIn   *time.Time `json:"expiresIn,omitempty"`
+}
+
 // User defines model for User.
 type User struct {
 	Email     *string             `json:"email,omitempty"`
@@ -115,6 +122,15 @@ type GeneralMessageWithSecretsResponse struct {
 	Code    *int      `json:"code"`
 	Message *string   `json:"message"`
 	Secrets *[]Secret `json:"secrets,omitempty"`
+}
+
+// GeneralMessageWithTokenResponse defines model for GeneralMessageWithTokenResponse.
+type GeneralMessageWithTokenResponse struct {
+	// AccessToken A JWT token
+	AccessToken string     `json:"accessToken"`
+	Code        *int       `json:"code"`
+	ExpiresIn   *time.Time `json:"expiresIn,omitempty"`
+	Message     *string    `json:"message"`
 }
 
 // GeneralMessageWithUserResponse defines model for GeneralMessageWithUserResponse.

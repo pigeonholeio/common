@@ -154,12 +154,14 @@ components:
 
           # schema:
           #   $ref: '#/components/schemas/GeneralMessageWithUserResponse'
-    Token:
+    GeneralMessageWithTokenResponse:
+      description: General Message Response with the PigeonHole JWT Access Token
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/Token'
-      description: A token response
+            allOf:
+            - $ref: '#/components/schemas/GeneralMessage'
+            - $ref: '#/components/schemas/Token'
     User:
       content:
         application/json:
@@ -185,7 +187,6 @@ components:
               type: string
             user:
               $ref: '#/components/schemas/User'
-
     OIDCProvider:
       type: object
       properties:
@@ -322,9 +323,14 @@ components:
         - ref
       type: object
     Token:
+      description: A JWT token created by PigeonHole after the IdP ID Token has been excha
       properties:
         accessToken:
           type: string
+          description: A JWT token
+        expiresIn: 
+          type: string
+          format: date-time
       required:
         - accessToken
       type: object
@@ -355,6 +361,12 @@ components:
           nullable: true
       required:
         - message
+
+    name:
+      type: object
+      properties:
+        property:
+          type: integer 
   securitySchemes:
     BearerAuth:
       type: http
@@ -370,13 +382,24 @@ paths:
           description: This generates a list of available OIDC providers
           $ref: '#/components/responses/GeneralMessageWithOIDCProvidersResponse'
         <<: *commonErrors
-  /auth/oidc/token-handler:
-    get:
+  /auth/oidc/handler/generic-jwt:
+    post:
       tags:
         - Auth
       responses:
-        '200':
+        '201':
           description: This is where the cli will post the ID token from the OIDC provider
+          $ref: '#/components/responses/GeneralMessageWithTokenResponse'
+        <<: *commonErrors
+      summary: Generic ID Token handler to be exchanged for a Pigeonhole token
+  /auth/oidc/handler/github:
+    post:
+      tags:
+        - Auth
+      responses:
+        '201':
+          description: This is where the cli will post the ID token from the OIDC provider
+          $ref: '#/components/responses/GeneralMessageWithTokenResponse'
         <<: *commonErrors
       summary: Generic ID Token handler to be exchanged for a Pigeonhole token
 
