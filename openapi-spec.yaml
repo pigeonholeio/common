@@ -193,6 +193,9 @@ components:
         name:
           type: string
           nullable: false
+        handlerUrl:
+          type: string
+          nullable: true
         authUrl:
           type: string
           nullable: false
