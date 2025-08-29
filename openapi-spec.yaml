@@ -328,9 +328,6 @@ components:
         accessToken:
           type: string
           description: A JWT token
-        expiresIn: 
-          type: string
-          format: date-time
       required:
         - accessToken
       type: object
