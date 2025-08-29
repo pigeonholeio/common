@@ -187,6 +187,13 @@ components:
               type: string
             user:
               $ref: '#/components/schemas/User'
+    OIDCProviderToken:
+      description: This is used to pass the IdP issued id/access token to exchange it for a PigeonHole access token
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: false
     OIDCProvider:
       type: object
       properties:
@@ -386,6 +393,12 @@ paths:
     post:
       tags:
         - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OIDCProviderToken'
+        required: true
       responses:
         '201':
           description: This is where the cli will post the ID token from the OIDC provider
@@ -396,6 +409,12 @@ paths:
     post:
       tags:
         - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OIDCProviderToken'
+        required: true
       responses:
         '201':
           description: This is where the cli will post the ID token from the OIDC provider

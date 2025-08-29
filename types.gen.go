@@ -76,6 +76,11 @@ type OIDCProvider struct {
 	TokenUrl      *string   `json:"tokenUrl,omitempty"`
 }
 
+// OIDCProviderToken This is used to pass the IdP issued id/access token to exchange it for a PigeonHole access token
+type OIDCProviderToken struct {
+	Name *string `json:"name,omitempty"`
+}
+
 // Secret defines model for Secret.
 type Secret struct {
 	Recipient *string `json:"recipient,omitempty"`
@@ -154,6 +159,12 @@ type GetSecretParams struct {
 type GetUserParams struct {
 	Id *[]string `form:"id,omitempty" json:"id,omitempty"`
 }
+
+// PostAuthOidcHandlerGenericJwtJSONRequestBody defines body for PostAuthOidcHandlerGenericJwt for application/json ContentType.
+type PostAuthOidcHandlerGenericJwtJSONRequestBody = OIDCProviderToken
+
+// PostAuthOidcHandlerGithubJSONRequestBody defines body for PostAuthOidcHandlerGithub for application/json ContentType.
+type PostAuthOidcHandlerGithubJSONRequestBody = OIDCProviderToken
 
 // PostSecretJSONRequestBody defines body for PostSecret for application/json ContentType.
 type PostSecretJSONRequestBody = CreateSecret
