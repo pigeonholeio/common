@@ -160,6 +160,9 @@ type GetUserParams struct {
 	Id *[]string `form:"id,omitempty" json:"id,omitempty"`
 }
 
+// PostAuthOidcHandlerGenericJSONRequestBody defines body for PostAuthOidcHandlerGeneric for application/json ContentType.
+type PostAuthOidcHandlerGenericJSONRequestBody = OIDCProviderToken
+
 // PostAuthOidcHandlerGenericJwtJSONRequestBody defines body for PostAuthOidcHandlerGenericJwt for application/json ContentType.
 type PostAuthOidcHandlerGenericJwtJSONRequestBody = OIDCProviderToken
 

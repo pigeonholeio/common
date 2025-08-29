@@ -405,6 +405,22 @@ paths:
           $ref: '#/components/responses/GeneralMessageWithTokenResponse'
         <<: *commonErrors
       summary: Generic ID Token handler to be exchanged for a Pigeonhole token
+  /auth/oidc/handler/generic:
+    post:
+      tags:
+        - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OIDCProviderToken'
+        required: true
+      responses:
+        '201':
+          description: This is where the cli will post the ID token from the OIDC provider
+          $ref: '#/components/responses/GeneralMessageWithTokenResponse'
+        <<: *commonErrors
+      summary: Generic ID Token handler to be exchanged for a Pigeonhole token
   /auth/oidc/handler/github:
     post:
       tags:
