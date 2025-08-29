@@ -191,7 +191,7 @@ components:
       description: This is used to pass the IdP issued id/access token to exchange it for a PigeonHole access token
       type: object
       properties:
-        name:
+        accessToken:
           type: string
           nullable: false
     OIDCProvider:

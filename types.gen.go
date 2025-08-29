@@ -78,7 +78,7 @@ type OIDCProvider struct {
 
 // OIDCProviderToken This is used to pass the IdP issued id/access token to exchange it for a PigeonHole access token
 type OIDCProviderToken struct {
-	Name *string `json:"name,omitempty"`
+	AccessToken *string `json:"accessToken,omitempty"`
 }
 
 // Secret defines model for Secret.
