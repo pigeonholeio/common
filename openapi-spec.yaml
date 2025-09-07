@@ -34,6 +34,7 @@ x-common-objects:
     '400': *commonResponse
     '401': *commonResponse
     '403': *commonResponse
+    '404': *commonResponse
     '500': *commonResponse
   
 components:
@@ -187,6 +188,25 @@ components:
               type: string
             user:
               $ref: '#/components/schemas/User'
+    # PigeonHoleJWTClaims:
+    #   description: This is used to pass the IdP issued id/access token to exchange it for a PigeonHole access token
+    #   type: object
+    #   properties:
+    #     aud:
+    #       type: string
+    #       nullable: false
+    #     sub:
+    #       type: string
+    #       nullable: false
+    #     idp:
+    #       type: string
+    #       nullable: false
+    #     iat:
+    #       type: number
+    #       nullable: false
+    #     exp:
+    #       type: number
+    #       nullable: false
     OIDCProviderToken:
       description: This is used to pass the IdP issued id/access token to exchange it for a PigeonHole access token
       type: object
