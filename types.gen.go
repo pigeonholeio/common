@@ -83,11 +83,11 @@ type OIDCProviderToken struct {
 
 // Secret defines model for Secret.
 type Secret struct {
-	Recipient *string `json:"recipient,omitempty"`
-	Reference *string `json:"reference,omitempty"`
-	Sender    *string `json:"sender,omitempty"`
-	SentAt    *string `json:"sent_at,omitempty"`
-	Size      *string `json:"size,omitempty"`
+	Recipient *string    `json:"recipient,omitempty"`
+	Reference *string    `json:"reference,omitempty"`
+	Sender    *string    `json:"sender,omitempty"`
+	SentAt    *time.Time `json:"sent_at,omitempty"`
+	Size      *float32   `json:"size,omitempty"`
 }
 
 // Token A JWT token created by PigeonHole after the IdP ID Token has been excha

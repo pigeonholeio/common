@@ -336,8 +336,9 @@ components:
           type: string
         sent_at:
           type: string
+          format: date-time
         size:
-          type: string
+          type: number
       type: object
     Tenant:
       properties:
