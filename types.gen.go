@@ -22,25 +22,6 @@ type CreateSecret struct {
 	Reference string `json:"reference"`
 }
 
-// CreateSecretResponse defines model for CreateSecretResponse.
-type CreateSecretResponse struct {
-	S3Info *struct {
-		Fields *struct {
-			Key                  *string   `json:"key,omitempty"`
-			Policy               *string   `json:"policy,omitempty"`
-			XAmzAlgorithm        *string   `json:"x-amz-algorithm,omitempty"`
-			XAmzCredential       *string   `json:"x-amz-credential,omitempty"`
-			XAmzDate             *string   `json:"x-amz-date,omitempty"`
-			XAmzMetaRecipientIds *[]string `json:"x-amz-meta-recipient_ids,omitempty"`
-			XAmzMetaReference    *string   `json:"x-amz-meta-reference,omitempty"`
-			XAmzMetaSenderId     *string   `json:"x-amz-meta-sender_id,omitempty"`
-			XAmzSignature        *string   `json:"x-amz-signature,omitempty"`
-		} `json:"fields,omitempty"`
-		Url *string `json:"url,omitempty"`
-	} `json:"s3_info,omitempty"`
-	Users *[]User `json:"users,omitempty"`
-}
-
 // GeneralMessage defines model for GeneralMessage.
 type GeneralMessage struct {
 	Code    *int    `json:"code"`
@@ -90,6 +71,25 @@ type Secret struct {
 	Size      *int64     `json:"size,omitempty"`
 }
 
+// SecretEnvolopeResponse defines model for SecretEnvolopeResponse.
+type SecretEnvolopeResponse struct {
+	S3Info *struct {
+		Fields *struct {
+			Key                  *string   `json:"key,omitempty"`
+			Policy               *string   `json:"policy,omitempty"`
+			XAmzAlgorithm        *string   `json:"x-amz-algorithm,omitempty"`
+			XAmzCredential       *string   `json:"x-amz-credential,omitempty"`
+			XAmzDate             *string   `json:"x-amz-date,omitempty"`
+			XAmzMetaRecipientIds *[]string `json:"x-amz-meta-recipient_ids,omitempty"`
+			XAmzMetaReference    *string   `json:"x-amz-meta-reference,omitempty"`
+			XAmzMetaSenderId     *string   `json:"x-amz-meta-sender_id,omitempty"`
+			XAmzSignature        *string   `json:"x-amz-signature,omitempty"`
+		} `json:"fields,omitempty"`
+		Url *string `json:"url,omitempty"`
+	} `json:"s3_info,omitempty"`
+	Users *[]User `json:"users,omitempty"`
+}
+
 // Token A JWT token created by PigeonHole after the IdP ID Token has been excha
 type Token struct {
 	// AccessToken A JWT token
@@ -121,6 +121,9 @@ type GeneralMessageWithOIDCProvidersResponse struct {
 	Message       *string                  `json:"message"`
 	OidcProviders *map[string]OIDCProvider `json:"oidcProviders,omitempty"`
 }
+
+// GeneralMessageWithSecretEnvelopeResponse defines model for GeneralMessageWithSecretEnvelopeResponse.
+type GeneralMessageWithSecretEnvelopeResponse = SecretEnvolopeResponse
 
 // GeneralMessageWithSecretResponse defines model for GeneralMessageWithSecretResponse.
 type GeneralMessageWithSecretResponse struct {

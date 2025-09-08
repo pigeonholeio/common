@@ -39,11 +39,11 @@ x-common-objects:
   
 components:
   responses:
-    CreateSecretResponse:
+    GeneralMessageWithSecretEnvelopeResponse:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/CreateSecretResponse'
+            $ref: '#/components/schemas/SecretEnvolopeResponse'
       description: A Secret object
     Secret:
       content:
@@ -255,6 +255,42 @@ components:
         #   type: string
         #   nullable: false
         
+    SecretEnvolopeResponse:
+      type: object
+      properties:
+        s3_info:
+          type: object
+          properties:
+            fields:
+              type: object
+              properties:
+                key:
+                  type: string
+                policy:
+                  type: string
+                x-amz-algorithm:
+                  type: string
+                x-amz-credential:
+                  type: string
+                x-amz-date:
+                  type: string
+                x-amz-meta-recipient_ids:
+                  type: array
+                  items:
+                    type: string
+                x-amz-meta-sender_id:
+                  type: string
+                x-amz-meta-reference:
+                  type: string
+                x-amz-signature:
+                  type: string
+            url:
+              type: string
+              format: uri
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
     CreateSecretResponse:
       type: object
       properties:
@@ -512,7 +548,7 @@ paths:
         required: true
       responses:
         '201':
-          $ref: '#/components/responses/CreateSecretResponse'
+          $ref: '#/components/responses/GeneralMessageWithSecretEnvelopeResponse'
         <<: *commonErrors
       security:
         - BearerAuth: []
