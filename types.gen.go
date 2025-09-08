@@ -87,7 +87,7 @@ type Secret struct {
 	Reference *string    `json:"reference,omitempty"`
 	Sender    *string    `json:"sender,omitempty"`
 	SentAt    *time.Time `json:"sent_at,omitempty"`
-	Size      *float32   `json:"size,omitempty"`
+	Size      *int64     `json:"size,omitempty"`
 }
 
 // Token A JWT token created by PigeonHole after the IdP ID Token has been excha

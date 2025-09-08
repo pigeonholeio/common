@@ -30,3 +30,14 @@ generate:
 	git add .
 	git commit -m'updated sdk'
 	git push
+patch:
+	@if ! grep -q '	PostAuthOidcCleverHandler(ctx context.Context, provider \*OIDCProvider, idPToken \*OIDCProviderToken, reqEditors ...RequestEditorFn) (\*http.Response, error)' ../cli/src/sdk/client.gen.go; then \
+		sed -i.bak '/PostAuthOidcHandlerGeneric(ctx context.Context, body PostAuthOidcHandlerGenericJSONRequestBody, reqEditors \.\.\.RequestEditorFn) (\*http.Response, error)/a\
+    PostAuthOidcCleverHandler(ctx context.Context, provider *OIDCProvider, idPToken *OIDCProviderToken, reqEditors ...RequestEditorFn) (*http.Response, error)' ../cli/src/sdk/client.gen.go && rm -f ../cli/src/sdk/client.gen.go.bak; \
+	else \
+		echo "Line already exists, skipping insert"; \
+	fi
+
+# patch:
+# 	sed -i '/	PostAuthOidcHandlerGeneric(ctx context.Context, body PostAuthOidcHandlerGenericJSONRequestBody, reqEditors \.\.\.RequestEditorFn) (\*http.Response, error)/a	\
+# 							\tPostAuthOidcCleverHandler(ctx context.Context, provider *OIDCProvider, idPToken *OIDCProviderToken, reqEditors ...RequestEditorFn) (*http.Response, error)' ../cli/src/sdk/client.gen.go
