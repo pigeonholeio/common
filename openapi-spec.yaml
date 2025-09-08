@@ -137,6 +137,17 @@ components:
                 user:
                   $ref: '#/components/schemas/User'
 
+    GeneralMessageWithSecretResponse:
+      description: General Message Response
+      content:
+        application/json:
+          schema:
+            allOf:
+            - $ref: '#/components/schemas/GeneralMessage'
+            - type: object
+              properties:
+                secret:
+                  $ref: '#/components/schemas/Secret'
     GeneralMessageWithSecretsResponse:
       description: General Message Response
       content:
