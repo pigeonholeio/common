@@ -38,16 +38,6 @@ func (f roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req)
 }
 
-// 	client, _ := sdk.NewClientWithResponses(viper.GetString("api.url"))
-// 	return *client
-// }
-
-// func getOutputFormatter() *formatter.Config {
-
-//		return &formatter.Config{
-//			Format: viper.GetString("output.format"),
-//		}
-//	}
 func ArrOutputData(data *[]interface{}) {
 	for i, s := range *data {
 		logrus.Debug(i)
@@ -64,9 +54,6 @@ func OutputData(data interface{}) {
 		g.SetFormatter(formatG())
 		g.MustPrint(data)
 	}
-	// w.SetFormatter()
-	// out, _ := w.OutputData(data, x)
-	// fmt.Println(string(out))
 }
 
 func decodeJWT(tokenStr string) (map[string]interface{}, error) {
@@ -109,19 +96,6 @@ func DecodeFromBase64(input string) (string, error) {
 	return string(decodedBytes), nil
 }
 
-// func GeneralErrorHandler(err Error) {
-// 	switch resp.StatusCode() {
-// 	case 400:
-// 		logrus.Debugln(resp.JSON400.Message)
-// 	case 401:
-// 		logrus.Debugln(resp.JSON401.Message)
-// 	case 403:
-// 		logrus.Debugln(resp.JSON403.Message)
-// 	case 500:
-// 		logrus.Debugln(resp.JSON500.Message)
-
-//		}
-//	}
 func GenerateCodeWord(numWords int) string {
 	words := make([]string, numWords+1)
 	// words[0] = randomdata.Adjective()
@@ -255,14 +229,6 @@ func CompressPath(src string, buf io.Writer) error {
 	return nil
 }
 
-// // check for path traversal and correct forward slashes
-// func validRelPath(p string) bool {
-// 	if p == "" || strings.Contains(p, `\`) || strings.HasPrefix(p, "/") || strings.Contains(p, "../") {
-// 		return false
-// 	}
-// 	return true
-// }
-
 func DecompressFile(src string, dst string) error {
 	// ungzip
 	file, _ := os.OpenFile(src, os.O_RDONLY, os.ModePerm)
@@ -286,8 +252,6 @@ func DecompressFile(src string, dst string) error {
 
 		// add dst + re-format slashes according to system
 		target = filepath.Join(dst, header.Name)
-		// if no join is needed, replace with ToSlash:
-		// target = filepath.ToSlash(header.Name)
 
 		// check the type
 		switch header.Typeflag {
@@ -309,8 +273,7 @@ func DecompressFile(src string, dst string) error {
 			if _, err := io.Copy(fileToWrite, tr); err != nil {
 				return err
 			}
-			// manually close here after each file operation; defering would cause each file close
-			// to wait until all operations have completed.
+
 			fileToWrite.Close()
 		}
 	}
