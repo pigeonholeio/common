@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/Pallinder/go-randomdata"
+	"github.com/oapi-codegen/runtime/types"
 
 	gout "github.com/drewstinnett/gout/v2"
 	"github.com/drewstinnett/gout/v2/formats"
@@ -291,4 +292,11 @@ func KeysExist() bool {
 		return true
 	}
 	return false
+}
+func EmailsToStrings(emails []types.Email) []string {
+	out := make([]string, len(emails))
+	for i, e := range emails {
+		out[i] = string(e)
+	}
+	return out
 }

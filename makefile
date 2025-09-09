@@ -29,6 +29,8 @@ generate:
 	@go mod tidy
 	@go mod vendor
 	@echo "API code generation complete."
+	$(MAKE) commit
+commit: 
 	git add .
 	git commit -m'updated sdk'
 	git push
