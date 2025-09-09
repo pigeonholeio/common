@@ -625,6 +625,11 @@ paths:
       description: Retrieve a list of users given a query e.g. user email, shortcode or id
       parameters:
         - in: query
+          name: ephemeralkeys
+          required: true
+          schema:
+            type: boolean
+        - in: query
           name: email
           required: true
           schema:
