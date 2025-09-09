@@ -633,7 +633,7 @@ paths:
               type: string
       responses:
         '200':
-          $ref: '#/components/responses/GeneralMessageWithUserResponse'
+          $ref: '#/components/responses/GeneralMessageWithUsersResponse'
           description: Successfully retrieved users
         <<: *commonErrors
       security:
