@@ -564,6 +564,8 @@ paths:
       responses:
         '201':
           $ref: '#/components/responses/GeneralMessageWithSecretEnvelopeResponse'
+        '306':
+          $ref: '#/components/responses/GeneralMessageResponse'
         <<: *commonErrors
       security:
         - BearerAuth: []
