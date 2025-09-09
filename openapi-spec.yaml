@@ -564,7 +564,7 @@ paths:
       responses:
         '201':
           $ref: '#/components/responses/GeneralMessageWithSecretEnvelopeResponse'
-        '204':
+        '406':
           $ref: '#/components/responses/GeneralMessageResponse'
         <<: *commonErrors
       security:
