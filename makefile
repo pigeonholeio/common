@@ -26,6 +26,8 @@ generate:
 	@$(OAPI_CODEGEN) --package sdk -generate types -o ../cli/src/sdk/types.gen.go $(OPENAPI_SPEC)
 	
 # 	@sed -i '/"fmt"/a \    sdk "github.com/pigeonholeio/common"' ../server/src/stub/server.gen.go
+	@go mod tidy
+	@go mod vendor
 	@echo "API code generation complete."
 	git add .
 	git commit -m'updated sdk'
