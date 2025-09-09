@@ -13,8 +13,11 @@ const (
 	BearerAuthScopes = "BearerAuth.Scopes"
 )
 
-// CreateSecret defines model for CreateSecret.
-type CreateSecret struct {
+// CreateSecretEnvolopeOptions defines model for CreateSecretEnvolopeOptions.
+type CreateSecretEnvolopeOptions struct {
+	// Ephemeralkeys A reference string for the secret.
+	Ephemeralkeys *bool `json:"ephemeralkeys,omitempty"`
+
 	// RecipientIds A list of recipient IDs.
 	RecipientIds []string `json:"recipient_ids"`
 
@@ -185,7 +188,7 @@ type PostAuthOidcHandlerGenericJwtJSONRequestBody = OIDCProviderToken
 type PostAuthOidcHandlerGithubJSONRequestBody = OIDCProviderToken
 
 // PostSecretJSONRequestBody defines body for PostSecret for application/json ContentType.
-type PostSecretJSONRequestBody = CreateSecret
+type PostSecretJSONRequestBody = CreateSecretEnvolopeOptions
 
 // PostUserMeKeyJSONRequestBody defines body for PostUserMeKey for application/json ContentType.
 type PostUserMeKeyJSONRequestBody = NewKey

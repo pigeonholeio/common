@@ -339,7 +339,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
-    CreateSecret:
+    CreateSecretEnvolopeOptions:
       properties:
         recipient_ids:
           description: A list of recipient IDs.
@@ -349,6 +349,9 @@ components:
         reference:
           description: A reference string for the secret.
           type: string
+        ephemeralkeys:
+          description: A reference string for the secret.
+          type: boolean
       required:
         - recipient_ids
         - reference
@@ -556,7 +559,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateSecret'
+              $ref: '#/components/schemas/CreateSecretEnvolopeOptions'
         required: true
       responses:
         '201':
