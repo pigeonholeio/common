@@ -126,7 +126,7 @@ components:
                   items:
                     $ref: '#/components/schemas/Key'
     GeneralMessageWithUserResponse:
-      description: General Message Response
+      description: General Message Response with Users 
       content:
         application/json:
           schema:
@@ -136,7 +136,19 @@ components:
               properties:
                 user:
                   $ref: '#/components/schemas/User'
-
+    GeneralMessageWithUsersResponse:
+      description: General Message Response with Users
+      content:
+        application/json:
+          schema:
+            allOf:
+            - $ref: '#/components/schemas/GeneralMessage'
+            - type: object
+              properties:
+                users:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/User'
     GeneralMessageWithSecretResponse:
       description: General Message Response
       content:
@@ -614,14 +626,14 @@ paths:
       parameters:
         - in: query
           name: id
-          required: false
+          required: true
           schema:
+            type: array
             items:
               type: string
-            type: array
       responses:
         '200':
-          $ref: '#/components/responses/Users'
+          $ref: '#/components/responses/GeneralMessageWithUserResponse'
           description: Successfully retrieved users
         <<: *commonErrors
       security:

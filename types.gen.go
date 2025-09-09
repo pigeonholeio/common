@@ -157,9 +157,6 @@ type GeneralMessageWithUserResponse struct {
 // Keys defines model for Keys.
 type Keys = []Key
 
-// Users defines model for Users.
-type Users = []User
-
 // GetSecretParams defines parameters for GetSecret.
 type GetSecretParams struct {
 	Reference *string `form:"reference,omitempty" json:"reference,omitempty"`
@@ -167,7 +164,7 @@ type GetSecretParams struct {
 
 // GetUserParams defines parameters for GetUser.
 type GetUserParams struct {
-	Id *[]string `form:"id,omitempty" json:"id,omitempty"`
+	Id []string `form:"id" json:"id"`
 }
 
 // PostAuthOidcHandlerGenericJSONRequestBody defines body for PostAuthOidcHandlerGeneric for application/json ContentType.
