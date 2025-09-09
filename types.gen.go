@@ -171,7 +171,7 @@ type GetSecretParams struct {
 
 // GetUserParams defines parameters for GetUser.
 type GetUserParams struct {
-	Id []string `form:"id" json:"id"`
+	Email []openapi_types.Email `form:"email" json:"email"`
 }
 
 // PostAuthOidcHandlerGenericJSONRequestBody defines body for PostAuthOidcHandlerGeneric for application/json ContentType.

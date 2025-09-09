@@ -625,12 +625,13 @@ paths:
       description: Retrieve a list of users given a query e.g. user email, shortcode or id
       parameters:
         - in: query
-          name: id
+          name: email
           required: true
           schema:
             type: array
             items:
               type: string
+              format: email
       responses:
         '200':
           $ref: '#/components/responses/GeneralMessageWithUsersResponse'
