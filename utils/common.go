@@ -16,8 +16,9 @@ import (
 	"github.com/Pallinder/go-randomdata"
 	"github.com/oapi-codegen/runtime/types"
 
+	"github.com/drewstinnett/gout/v2"
 	gout "github.com/drewstinnett/gout/v2"
-	"github.com/drewstinnett/gout/v2/formats"
+	"github.com/drewstinnett/gout/v2/formats/yaml"
 	jwt "github.com/golang-jwt/jwt/v5"
 
 	"github.com/sirupsen/logrus"
@@ -48,13 +49,16 @@ func ArrOutputData(data *[]interface{}) {
 
 func OutputData(data interface{}) {
 	// x := getOutputFormatter()
-	g := gout.New()
+	// g := gout.New()
+	// gout.WithFormatter(formats.Formats["yaml"])
+	gout.SetFormatter(yaml.Formatter{})
+	gout.MustPrint(data)
 	// spew.Dump(oidcProviders.JSON200.OidcProviders)
-	for formatN, formatG := range formats.Formats {
-		fmt.Println(formatN, formatG)
-		g.SetFormatter(formatG())
-		g.MustPrint(data)
-	}
+	// for formatN, formatG := range formats.Formats {
+	// 	fmt.Println(formatN, formatG)
+	// 	g.SetFormatter(formatG())
+	// 	g.MustPrint(data)
+	// }
 }
 
 func decodeJWT(tokenStr string) (map[string]interface{}, error) {
@@ -293,6 +297,7 @@ func KeysExist() bool {
 	}
 	return false
 }
+
 func EmailsToStrings(emails []types.Email) []string {
 	out := make([]string, len(emails))
 	for i, e := range emails {
