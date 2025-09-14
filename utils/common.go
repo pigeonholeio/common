@@ -16,7 +16,6 @@ import (
 	"github.com/Pallinder/go-randomdata"
 	"github.com/oapi-codegen/runtime/types"
 
-	"github.com/drewstinnett/gout/v2"
 	gout "github.com/drewstinnett/gout/v2"
 	"github.com/drewstinnett/gout/v2/formats/yaml"
 	jwt "github.com/golang-jwt/jwt/v5"
