@@ -93,15 +93,6 @@ type SecretEnvolopeResponse struct {
 	Users *[]User `json:"users,omitempty"`
 }
 
-// SecretView defines model for SecretView.
-type SecretView struct {
-	Recipient *string `json:"recipient,omitempty"`
-	Reference *string `json:"reference,omitempty"`
-	Sender    *string `json:"sender,omitempty"`
-	SentAt    *string `json:"sent_at,omitempty"`
-	Size      *string `json:"size,omitempty"`
-}
-
 // Token A JWT token created by PigeonHole after the IdP ID Token has been excha
 type Token struct {
 	// AccessToken A JWT token
@@ -144,13 +135,6 @@ type GeneralMessageWithSecretResponse struct {
 	Secret  *Secret `json:"secret,omitempty"`
 }
 
-// GeneralMessageWithSecretViewResponse defines model for GeneralMessageWithSecretViewResponse.
-type GeneralMessageWithSecretViewResponse struct {
-	Code    *int          `json:"code"`
-	Message *string       `json:"message"`
-	Secrets *[]SecretView `json:"secrets,omitempty"`
-}
-
 // GeneralMessageWithSecretsResponse defines model for GeneralMessageWithSecretsResponse.
 type GeneralMessageWithSecretsResponse struct {
 	Code    *int      `json:"code"`
@@ -185,11 +169,6 @@ type Keys = []Key
 
 // GetSecretParams defines parameters for GetSecret.
 type GetSecretParams struct {
-	Reference *string `form:"reference,omitempty" json:"reference,omitempty"`
-}
-
-// OptionsSecretParams defines parameters for OptionsSecret.
-type OptionsSecretParams struct {
 	Reference *string `form:"reference,omitempty" json:"reference,omitempty"`
 }
 
