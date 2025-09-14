@@ -31,6 +31,7 @@ generate:
 	@echo "API code generation complete."
 	$(MAKE) commit
 commit: 
+	cd utils && go build
 	git add .
 	git commit -m'updated sdk'
 	git push
