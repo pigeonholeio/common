@@ -46,11 +46,9 @@ func ArrOutputData(data *[]interface{}) {
 		OutputData(s)
 	}
 }
-
 func OutputData(data interface{}) {
 	gout.SetFormatter(yaml.Formatter{})
 	gout.MustPrint(data)
-
 }
 
 func decodeJWT(tokenStr string) (map[string]interface{}, error) {
