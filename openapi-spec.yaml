@@ -562,6 +562,24 @@ paths:
       security:
         - BearerAuth: []
 
+    options:
+      description: Get my secrets
+      parameters:
+        - in: query
+          name: reference
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/GeneralMessageWithSecretViewResponse'
+          description: Retrieve secrets sent to user
+        <<: *commonErrors
+      security:
+        - BearerAuth: []
+      summary: Get my secrets
+      tags:
+        - Secret
     get:
       description: Get my secrets
       parameters:
