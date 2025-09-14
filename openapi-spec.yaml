@@ -388,6 +388,20 @@ components:
         - tenant
         - key
       type: object
+    SecretView:
+      properties:
+        reference:
+          type: string
+        recipient:
+          type: string
+        sender:
+          type: string
+        sent_at:
+          type: string
+          format: HumanTime
+        size:
+          type: string
+      type: object
     Secret:
       properties:
         reference:
