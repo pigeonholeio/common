@@ -48,17 +48,9 @@ func ArrOutputData(data *[]interface{}) {
 }
 
 func OutputData(data interface{}) {
-	// x := getOutputFormatter()
-	// g := gout.New()
-	// gout.WithFormatter(formats.Formats["yaml"])
 	gout.SetFormatter(yaml.Formatter{})
 	gout.MustPrint(data)
-	// spew.Dump(oidcProviders.JSON200.OidcProviders)
-	// for formatN, formatG := range formats.Formats {
-	// 	fmt.Println(formatN, formatG)
-	// 	g.SetFormatter(formatG())
-	// 	g.MustPrint(data)
-	// }
+
 }
 
 func decodeJWT(tokenStr string) (map[string]interface{}, error) {
