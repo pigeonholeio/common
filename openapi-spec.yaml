@@ -722,8 +722,7 @@ paths:
       responses:
         '200':
           description: Successfully retrieved items
-        '404':
-          description: No key found
+          $ref: '#/components/responses/GeneralMessageWithKeyResponse'
         <<: *commonErrors
       security:
         - BearerAuth: []
