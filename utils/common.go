@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -101,6 +102,157 @@ func GenerateCodeWord(numWords int) string {
 	return strings.Join(words, "-")
 }
 
+func DownloadFile(url *string) (string, error) {
+	// Make HTTP GET request
+	resp, err := http.Get(*url)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("bad status: %s", resp.Status)
+	}
+
+	// Create a temp file
+	tmpFile, err := os.CreateTemp("", "download-*"+filepath.Ext(*url))
+	if err != nil {
+		return "", err
+	}
+	defer tmpFile.Close()
+
+	// Copy response body to the temp file
+	_, err = io.Copy(tmpFile, resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	// Return the temp file path
+	return tmpFile.Name(), nil
+}
+
+func ShredFile(path string, passes int) error {
+	logrus.Debugf("shredding filepath %s with passes: %d", path, passes)
+	if passes <= 0 {
+		os.Remove(path)
+	}
+
+	const chunkSize = 4 * 1024 * 1024 // 4 MiB buffer
+
+	// Stat file first
+	info, err := os.Stat(path)
+	if err != nil {
+		return fmt.Errorf("stat file: %w", err)
+	}
+	if info.IsDir() {
+		return fmt.Errorf("path is a directory")
+	}
+	size := info.Size()
+
+	// open file for writing
+	f, err := os.OpenFile(path, os.O_WRONLY, 0)
+	if err != nil {
+		return fmt.Errorf("open file for overwrite: %w", err)
+	}
+	// ensure it's closed later
+	defer f.Close()
+
+	var firstErr error
+	buf := make([]byte, chunkSize)
+
+	for pass := 0; pass < passes; pass++ {
+		// Seek to beginning
+		if _, err := f.Seek(0, io.SeekStart); err != nil {
+			if firstErr == nil {
+				firstErr = fmt.Errorf("seek start (pass %d): %w", pass+1, err)
+			}
+			// continue attempts
+		}
+
+		remaining := size
+		for remaining > 0 {
+			writeLen := int64(len(buf))
+			if remaining < writeLen {
+				writeLen = remaining
+			}
+
+			// fill buffer with random bytes
+			if _, err := io.ReadFull(rand.Reader, buf[:writeLen]); err != nil {
+				if firstErr == nil {
+					firstErr = fmt.Errorf("rand read (pass %d): %w", pass+1, err)
+				}
+				break
+			}
+
+			if _, err := f.Write(buf[:writeLen]); err != nil {
+				if firstErr == nil {
+					firstErr = fmt.Errorf("write (pass %d): %w", pass+1, err)
+				}
+				break
+			}
+			remaining -= writeLen
+		}
+
+		// try to flush to stable storage
+		if err := f.Sync(); err != nil && firstErr == nil {
+			firstErr = fmt.Errorf("sync after pass %d: %w", pass+1, err)
+		}
+	}
+
+	// attempt to overwrite file metadata (rename, truncate, chmod, remove) even if overwrites failed
+	dir := filepath.Dir(path)
+	randomName := filepath.Join(dir, randomHexName(16))
+	if err := os.Rename(path, randomName); err != nil && firstErr == nil {
+		firstErr = fmt.Errorf("rename to random name: %w", err)
+	}
+
+	// Try to open the renamed file for final truncation/chmod/sync
+	nf, err := os.OpenFile(randomName, os.O_WRONLY, 0)
+	if err == nil {
+		// overwrite with a single zero-length truncate to remove data (best-effort)
+		if err := nf.Truncate(0); err != nil && firstErr == nil {
+			firstErr = fmt.Errorf("truncate renamed file: %w", err)
+		}
+
+		if err := nf.Sync(); err != nil && firstErr == nil {
+			firstErr = fmt.Errorf("sync renamed file: %w", err)
+		}
+		nf.Close()
+	} else {
+		if firstErr == nil {
+			firstErr = fmt.Errorf("open renamed file: %w", err)
+		}
+	}
+
+	// remove file permissions
+	if err := os.Chmod(randomName, 0); err != nil && firstErr == nil {
+		firstErr = fmt.Errorf("chmod renamed file: %w", err)
+	}
+
+	// remove file
+	if err := os.Remove(randomName); err != nil && firstErr == nil {
+		firstErr = fmt.Errorf("remove renamed file: %w", err)
+	}
+
+	// try to sync directory to persist the unlink
+	if dirFile, err := os.Open(dir); err == nil {
+		_ = dirFile.Sync() // ignore error, preserve firstErr if any
+		_ = dirFile.Close()
+	} else if firstErr == nil {
+		firstErr = fmt.Errorf("open parent dir for sync: %w", err)
+	}
+
+	return firstErr
+}
+
+func randomHexName(n int) string {
+	b := make([]byte, n)
+	if _, err := io.ReadFull(rand.Reader, b); err != nil {
+		// fallback to time-based fallback (very unlikely)
+		return fmt.Sprintf("%x", b)
+	}
+	return hex.EncodeToString(b)
+}
 func SecureDelete(filePath string) error {
 	// Open the file
 	file, err := os.OpenFile(filePath, os.O_WRONLY, 0)
@@ -274,10 +426,6 @@ func DecompressFile(src string, dst string) error {
 
 	//
 	return nil
-}
-
-func ShredFile(path string) error {
-	return os.Remove(path)
 }
 
 func KeysExist() bool {
