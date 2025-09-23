@@ -110,6 +110,13 @@ type User struct {
 // GeneralMessageResponse defines model for GeneralMessageResponse.
 type GeneralMessageResponse = GeneralMessage
 
+// GeneralMessageWithDownloadResponse defines model for GeneralMessageWithDownloadResponse.
+type GeneralMessageWithDownloadResponse struct {
+	Code        *int    `json:"code"`
+	DownloadUrl *string `json:"downloadUrl,omitempty"`
+	Message     *string `json:"message"`
+}
+
 // GeneralMessageWithKeyResponse defines model for GeneralMessageWithKeyResponse.
 type GeneralMessageWithKeyResponse struct {
 	Code    *int    `json:"code"`

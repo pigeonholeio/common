@@ -112,6 +112,17 @@ components:
           schema:
             allOf:
             - $ref: '#/components/schemas/GeneralMessage'
+    GeneralMessageWithDownloadResponse:
+      description: General Message Response with Download URL
+      content:
+        application/json:
+          schema:
+            allOf:
+            - $ref: '#/components/schemas/GeneralMessage'
+            - type: object
+              properties:
+                downloadUrl:
+                  type: string
     GeneralMessageWithKeyResponse:
       description: General Message Response
       content:
@@ -624,7 +635,8 @@ paths:
             type: string
       responses:
         '307':
-          description: Redirect to the file download URL
+          description: Redirect to the file's presigned url to securely download the file direct from S3
+          $ref: '#/components/responses/GeneralMessageWithDownloadResponse'
         <<: *commonErrors
       security:
         - BearerAuth: []
@@ -670,18 +682,18 @@ paths:
       summary: Get my user object
       tags:
         - User
-  /user/me/rotate-shortcode:
-    post:
-      description: Rotate users short code to remain anonymous
-      responses:
-        '204':
-          description: Successfully rotated shortcode
-        <<: *commonErrors
-      security:
-        - BearerAuth: []
-      summary: Get my user object
-      tags:
-        - User
+  # /user/me/rotate-shortcode:
+  #   post:
+  #     description: Rotate users short code to remain anonymous
+  #     responses:
+  #       '204':
+  #         description: Successfully rotated shortcode
+  #       <<: *commonErrors
+  #     security:
+  #       - BearerAuth: []
+  #     summary: Get my user object
+  #     tags:
+  #       - User
   /user/me/key:
     get:
       description: Get my user object
