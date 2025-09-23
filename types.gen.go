@@ -177,6 +177,7 @@ type Keys = []Key
 // GetSecretParams defines parameters for GetSecret.
 type GetSecretParams struct {
 	Reference *string `form:"reference,omitempty" json:"reference,omitempty"`
+	All       *bool   `form:"all,omitempty" json:"all,omitempty"`
 }
 
 // GetUserParams defines parameters for GetUser.
