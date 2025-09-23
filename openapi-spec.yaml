@@ -528,7 +528,7 @@ paths:
         - Secret
       description: Delete all the users received secrets
       responses:
-        '204':
+        '200':
           $ref: '#/components/responses/GeneralMessageResponse'
           description: Deletion of all users rececived secrets is successful
         <<: *commonErrors
