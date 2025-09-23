@@ -98,7 +98,6 @@ func GenerateCodeWord(numWords int) string {
 	for i := 0; i < numWords; i++ {
 		words[i+1] = randomdata.Noun()
 	}
-
 	return strings.Join(words, "-")
 }
 
