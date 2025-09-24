@@ -12,7 +12,6 @@ import (
 	"os"
 
 	crypto "github.com/ProtonMail/gopenpgp/v2/crypto"
-	"github.com/spf13/viper"
 )
 
 func ExtractEmail(armoredKey string) (string, error) {
@@ -119,9 +118,9 @@ func EncryptFile(filePath string, armoredPubKeys []string) (encryptedFilePath st
 
 	return tmpFile.Name(), nil
 }
-func DecryptBytes(input []byte, destinationPath string) (decryptedFilePath string, err error) {
-	armoredPrivKey, _ := DecodeFromBase64(viper.GetViper().GetString("key.latest.private"))
-	keyObj, err := crypto.NewKeyFromArmored(armoredPrivKey)
+func DecryptBytes(input []byte, destinationPath *string, armoredPrivKey *string) (decryptedFilePath string, err error) {
+
+	keyObj, err := crypto.NewKeyFromArmored(*armoredPrivKey)
 	if err != nil {
 		return "", err
 	}
@@ -130,9 +129,9 @@ func DecryptBytes(input []byte, destinationPath string) (decryptedFilePath strin
 	if err != nil {
 		return "", err
 	}
-	os.MkdirAll(destinationPath, os.ModePerm)
+	os.MkdirAll(*destinationPath, os.ModePerm)
 
-	tmpFile, err := ioutil.TempFile(destinationPath, "pigeonhole-")
+	tmpFile, err := ioutil.TempFile(*destinationPath, "pigeonhole-")
 	if err != nil {
 		return "", err
 	}
