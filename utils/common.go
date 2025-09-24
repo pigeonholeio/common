@@ -102,7 +102,6 @@ func GenerateCodeWord(numWords int) string {
 }
 
 func DownloadFile(url *string) (string, error) {
-	// Make HTTP GET request
 	resp, err := http.Get(*url)
 	if err != nil {
 		return "", err
@@ -119,6 +118,8 @@ func DownloadFile(url *string) (string, error) {
 		return "", err
 	}
 	defer tmpFile.Close()
+	filename := tmpFile.Name()
+	logrus.Debugf("Downloading file %s to %s", url, filename)
 
 	// Copy response body to the temp file
 	_, err = io.Copy(tmpFile, resp.Body)
