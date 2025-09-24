@@ -112,9 +112,10 @@ type GeneralMessageResponse = GeneralMessage
 
 // GeneralMessageWithDownloadResponse defines model for GeneralMessageWithDownloadResponse.
 type GeneralMessageWithDownloadResponse struct {
-	Code        *int    `json:"code"`
-	DownloadUrl *string `json:"downloadUrl,omitempty"`
-	Message     *string `json:"message"`
+	Code            *int    `json:"code"`
+	DownloadUrl     *string `json:"downloadUrl,omitempty"`
+	Message         *string `json:"message"`
+	SecretReference *string `json:"secretReference,omitempty"`
 }
 
 // GeneralMessageWithKeyResponse defines model for GeneralMessageWithKeyResponse.

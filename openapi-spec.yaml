@@ -123,6 +123,8 @@ components:
               properties:
                 downloadUrl:
                   type: string
+                secretReference:
+                  type: string
     GeneralMessageWithKeyResponse:
       description: General Message Response
       content:
