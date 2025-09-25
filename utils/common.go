@@ -12,7 +12,10 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Pallinder/go-randomdata"
 	"github.com/oapi-codegen/runtime/types"
@@ -129,6 +132,36 @@ func DownloadFile(url *string) (string, error) {
 
 	// Return the temp file path
 	return tmpFile.Name(), nil
+}
+
+func ParseExpiration(s string) (time.Time, error) {
+	re := regexp.MustCompile(`(\d+)([smhdw])`)
+	matches := re.FindAllStringSubmatch(s, -1)
+	if matches == nil {
+		return time.Time{}, fmt.Errorf("invalid duration: %s", s)
+	}
+
+	var total time.Duration
+	for _, match := range matches {
+		value, _ := strconv.Atoi(match[1])
+		unit := match[2]
+		switch unit {
+		case "s":
+			total += time.Duration(value) * time.Second
+		case "m":
+			total += time.Duration(value) * time.Minute
+		case "h":
+			total += time.Duration(value) * time.Hour
+		case "d":
+			total += time.Duration(value) * 24 * time.Hour
+		case "w":
+			total += time.Duration(value) * 168 * time.Hour
+		default:
+			return time.Time{}, fmt.Errorf("unknown unit: %s", unit)
+		}
+	}
+
+	return time.Now().Add(total), nil
 }
 
 func ShredFile(path string, passes int) error {
