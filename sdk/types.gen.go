@@ -71,8 +71,8 @@ type Secret struct {
 	Size      *int64     `json:"size,omitempty"`
 }
 
-// SecretEnvolopeResponse defines model for SecretEnvolopeResponse.
-type SecretEnvolopeResponse struct {
+// SecretEnvelopeResponse defines model for SecretEnvelopeResponse.
+type SecretEnvelopeResponse struct {
 	S3Info *struct {
 		Fields *struct {
 			Key                  *string   `json:"key,omitempty"`
@@ -123,7 +123,7 @@ type GeneralMessageWithOIDCProvidersResponse struct {
 }
 
 // GeneralMessageWithSecretEnvelopeResponse defines model for GeneralMessageWithSecretEnvelopeResponse.
-type GeneralMessageWithSecretEnvelopeResponse = SecretEnvolopeResponse
+type GeneralMessageWithSecretEnvelopeResponse = SecretEnvelopeResponse
 
 // GeneralMessageWithSecretResponse defines model for GeneralMessageWithSecretResponse.
 type GeneralMessageWithSecretResponse struct {

@@ -13,8 +13,8 @@ const (
 	BearerAuthScopes = "BearerAuth.Scopes"
 )
 
-// CreateSecretEnvolopeOptions defines model for CreateSecretEnvolopeOptions.
-type CreateSecretEnvolopeOptions struct {
+// CreateSecretEnvelopeOptions defines model for CreateSecretEnvelopeOptions.
+type CreateSecretEnvelopeOptions struct {
 	// Ephemeralkeys A reference string for the secret.
 	Ephemeralkeys *bool `json:"ephemeralkeys,omitempty"`
 
@@ -74,8 +74,8 @@ type Secret struct {
 	Size      *int64     `json:"size,omitempty"`
 }
 
-// SecretEnvolopeResponse defines model for SecretEnvolopeResponse.
-type SecretEnvolopeResponse struct {
+// SecretEnvelopeResponse defines model for SecretEnvelopeResponse.
+type SecretEnvelopeResponse struct {
 	S3Info *struct {
 		Fields *struct {
 			Key                  *string   `json:"key,omitempty"`
@@ -141,7 +141,7 @@ type GeneralMessageWithOIDCProvidersResponse struct {
 }
 
 // GeneralMessageWithSecretEnvelopeResponse defines model for GeneralMessageWithSecretEnvelopeResponse.
-type GeneralMessageWithSecretEnvelopeResponse = SecretEnvolopeResponse
+type GeneralMessageWithSecretEnvelopeResponse = SecretEnvelopeResponse
 
 // GeneralMessageWithSecretResponse defines model for GeneralMessageWithSecretResponse.
 type GeneralMessageWithSecretResponse struct {
@@ -204,7 +204,7 @@ type PostAuthOidcHandlerGenericJwtJSONRequestBody = OIDCProviderToken
 type PostAuthOidcHandlerGithubJSONRequestBody = OIDCProviderToken
 
 // PostSecretJSONRequestBody defines body for PostSecret for application/json ContentType.
-type PostSecretJSONRequestBody = CreateSecretEnvolopeOptions
+type PostSecretJSONRequestBody = CreateSecretEnvelopeOptions
 
 // PostUserMeKeyJSONRequestBody defines body for PostUserMeKey for application/json ContentType.
 type PostUserMeKeyJSONRequestBody = NewKey

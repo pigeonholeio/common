@@ -43,7 +43,7 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/SecretEnvolopeResponse'
+            $ref: '#/components/schemas/SecretEnvelopeResponse'
       description: A Secret object
     Secret:
       content:
@@ -280,7 +280,7 @@ components:
         #   type: string
         #   nullable: false
         
-    SecretEnvolopeResponse:
+    SecretEnvelopeResponse:
       type: object
       properties:
         s3_info:
@@ -352,7 +352,7 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
-    CreateSecretEnvolopeOptions:
+    CreateSecretEnvelopeOptions:
       properties:
         recipient_ids:
           description: A list of recipient IDs.
@@ -577,7 +577,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateSecretEnvolopeOptions'
+              $ref: '#/components/schemas/CreateSecretEnvelopeOptions'
         required: true
       responses:
         '201':
