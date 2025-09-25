@@ -415,6 +415,8 @@ components:
         size:
           type: integer
           format: int64
+        onetime:
+          type: boolean
       type: object
     Tenant:
       properties:

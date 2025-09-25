@@ -67,6 +67,7 @@ type OIDCProviderToken struct {
 
 // Secret defines model for Secret.
 type Secret struct {
+	Onetime   *bool      `json:"onetime,omitempty"`
 	Recipient *string    `json:"recipient,omitempty"`
 	Reference *string    `json:"reference,omitempty"`
 	Sender    *string    `json:"sender,omitempty"`
