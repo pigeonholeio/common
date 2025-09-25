@@ -374,6 +374,7 @@ components:
           type: boolean
         expiration:
           type: string
+          format: date-time
       required:
         - recipient_ids
         - reference
