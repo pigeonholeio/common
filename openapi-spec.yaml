@@ -367,6 +367,8 @@ components:
           type: boolean
         onetime:
           type: boolean
+        expiration:
+          type: string
       required:
         - recipient_ids
         - reference
@@ -412,6 +414,9 @@ components:
         sender:
           type: string
         sent_at:
+          type: string
+          format: date-time
+        expiration:
           type: string
           format: date-time
         size:

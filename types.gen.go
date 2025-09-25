@@ -16,8 +16,9 @@ const (
 // CreateSecretEnvelopeOptions defines model for CreateSecretEnvelopeOptions.
 type CreateSecretEnvelopeOptions struct {
 	// Ephemeralkeys A reference string for the secret.
-	Ephemeralkeys *bool `json:"ephemeralkeys,omitempty"`
-	Onetime       *bool `json:"onetime,omitempty"`
+	Ephemeralkeys *bool   `json:"ephemeralkeys,omitempty"`
+	Expiration    *string `json:"expiration,omitempty"`
+	Onetime       *bool   `json:"onetime,omitempty"`
 
 	// RecipientIds A list of recipient IDs.
 	RecipientIds []string `json:"recipient_ids"`
@@ -68,12 +69,13 @@ type OIDCProviderToken struct {
 
 // Secret defines model for Secret.
 type Secret struct {
-	Onetime   *bool      `json:"onetime,omitempty"`
-	Recipient *string    `json:"recipient,omitempty"`
-	Reference *string    `json:"reference,omitempty"`
-	Sender    *string    `json:"sender,omitempty"`
-	SentAt    *time.Time `json:"sent_at,omitempty"`
-	Size      *int64     `json:"size,omitempty"`
+	Expiration *time.Time `json:"expiration,omitempty"`
+	Onetime    *bool      `json:"onetime,omitempty"`
+	Recipient  *string    `json:"recipient,omitempty"`
+	Reference  *string    `json:"reference,omitempty"`
+	Sender     *string    `json:"sender,omitempty"`
+	SentAt     *time.Time `json:"sent_at,omitempty"`
+	Size       *int64     `json:"size,omitempty"`
 }
 
 // SecretEnvelopeResponse defines model for SecretEnvelopeResponse.
