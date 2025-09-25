@@ -17,6 +17,7 @@ const (
 type CreateSecretEnvelopeOptions struct {
 	// Ephemeralkeys A reference string for the secret.
 	Ephemeralkeys *bool `json:"ephemeralkeys,omitempty"`
+	Onetime       *bool `json:"onetime,omitempty"`
 
 	// RecipientIds A list of recipient IDs.
 	RecipientIds []string `json:"recipient_ids"`

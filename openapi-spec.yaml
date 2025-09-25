@@ -365,6 +365,8 @@ components:
         ephemeralkeys:
           description: A reference string for the secret.
           type: boolean
+        onetime:
+          type: boolean
       required:
         - recipient_ids
         - reference
