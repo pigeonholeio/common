@@ -283,6 +283,11 @@ components:
     SecretEnvelopeResponse:
       type: object
       properties:
+        expiration:
+          type: string
+          format: date-time
+        onetime:
+          type: boolean
         s3_info:
           type: object
           properties:

@@ -80,7 +80,9 @@ type Secret struct {
 
 // SecretEnvelopeResponse defines model for SecretEnvelopeResponse.
 type SecretEnvelopeResponse struct {
-	S3Info *struct {
+	Expiration *time.Time `json:"expiration,omitempty"`
+	Onetime    *bool      `json:"onetime,omitempty"`
+	S3Info     *struct {
 		Fields *struct {
 			Key                  *string   `json:"key,omitempty"`
 			Policy               *string   `json:"policy,omitempty"`
