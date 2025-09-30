@@ -138,6 +138,16 @@ components:
                   type: array
                   items:
                     $ref: '#/components/schemas/Key'
+    GeneralMessageWithServerInfoResponse:
+      description: General Message Response with Users 
+      content:
+        application/json:
+          schema:
+            allOf:
+            - type: object
+              properties:
+                version:
+                  type: string
     GeneralMessageWithUserResponse:
       description: General Message Response with Users 
       content:
@@ -659,6 +669,16 @@ paths:
         - BearerAuth: []
       tags:
         - Secret
+  /ping:
+    get:
+      description: Basic endpoint that tests auth and returns server info
+      responses:
+        '200':
+          $ref: '#/components/responses/GeneralMessageWithServerInfoResponse'
+          description: Successfully retrieved users
+      security:
+        - BearerAuth: []
+      summary: Retrieve all items from the given schema
   /user:
     get:
       description: Retrieve a list of users given a query e.g. user email, shortcode or id

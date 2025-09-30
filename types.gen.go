@@ -163,6 +163,11 @@ type GeneralMessageWithSecretsResponse struct {
 	Secrets *[]Secret `json:"secrets,omitempty"`
 }
 
+// GeneralMessageWithServerInfoResponse defines model for GeneralMessageWithServerInfoResponse.
+type GeneralMessageWithServerInfoResponse struct {
+	Version *string `json:"version,omitempty"`
+}
+
 // GeneralMessageWithTokenResponse defines model for GeneralMessageWithTokenResponse.
 type GeneralMessageWithTokenResponse struct {
 	// AccessToken A JWT token
