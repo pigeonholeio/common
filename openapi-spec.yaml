@@ -676,6 +676,7 @@ paths:
         '200':
           $ref: '#/components/responses/GeneralMessageWithServerInfoResponse'
           description: Successfully retrieved users
+      <<: *commonErrors
       security:
         - BearerAuth: []
       summary: Retrieve all items from the given schema
