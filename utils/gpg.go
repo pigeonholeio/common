@@ -2,11 +2,14 @@ package utils
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
 
 	"github.com/sirupsen/logrus"
+
+	s3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	log "github.com/sirupsen/logrus"
 
 	"os"
@@ -167,4 +170,136 @@ func DecryptBytes(input []byte, destinationPath *string, armoredPrivKey *string)
 	}
 
 	return tmpFile.Name(), nil
+}
+
+func EncryptStream(src io.Reader, dst io.Writer, armoredPubKeys []string) error {
+	var pubRing *crypto.KeyRing
+
+	for _, armoredKey := range armoredPubKeys {
+		keyObj, err := crypto.NewKeyFromArmored(armoredKey)
+		if err != nil {
+			return err
+		}
+		if pubRing == nil {
+			pubRing, err = crypto.NewKeyRing(keyObj)
+			if err != nil {
+				return err
+			}
+		} else if err := pubRing.AddKey(keyObj); err != nil {
+			return err
+		}
+	}
+
+	pt, err := pubRing.EncryptStream(dst, &crypto.PlainMessageMetadata{IsBinary: true}, nil)
+	if err != nil {
+		return err
+	}
+	defer pt.Close()
+
+	_, err = io.Copy(pt, src)
+	return err
+}
+
+// DecryptStream decrypts data from `src` into `dst` using the given private key.
+func DecryptStream(src io.Reader, dst io.Writer, armoredPrivKey string) error {
+	keyObj, err := crypto.NewKeyFromArmored(armoredPrivKey)
+	if err != nil {
+		return err
+	}
+	privRing, err := crypto.NewKeyRing(keyObj)
+	if err != nil {
+		return err
+	}
+
+	decryptReader, err := privRing.DecryptStream(src, nil, 0)
+	if err != nil {
+		return err
+	}
+	// defer decryptReader.Close()
+
+	_, err = io.Copy(dst, decryptReader)
+	return err
+}
+
+func ReEncryptS3Object(
+	ctx context.Context,
+	s3Client *s3.Client,
+	bucket, key string,
+	privKey string,
+	pubKeys []string,
+	out io.Writer,
+) error {
+
+	// Download object as stream
+	obj, err := s3Client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: &bucket,
+		Key:    &key,
+	})
+	if err != nil {
+		return err
+	}
+	defer obj.Body.Close()
+
+	// Create streaming pipeline: decrypt → encrypt
+	prDecrypt, pwDecrypt := io.Pipe()
+	prEncrypt, pwEncrypt := io.Pipe()
+
+	// Stage 1: decrypt S3 object
+	go func() {
+		defer pwDecrypt.Close()
+		if err := DecryptStream(obj.Body, pwDecrypt, privKey); err != nil {
+			pwDecrypt.CloseWithError(err)
+		}
+	}()
+
+	// Stage 2: encrypt decrypted output
+	go func() {
+		defer pwEncrypt.Close()
+		if err := EncryptStream(prDecrypt, pwEncrypt, pubKeys); err != nil {
+			pwEncrypt.CloseWithError(err)
+		}
+	}()
+
+	// Stage 3: stream to output (could be file or another S3 upload)
+	_, err = io.Copy(out, prEncrypt)
+	return err
+}
+
+func ReEncryptAndUploadToS3(
+	ctx context.Context,
+	s3Client *s3.Client,
+	bucket, key string,
+	encryptedData []byte,
+	privKey string,
+	pubKeys []string,
+) error {
+	src := bytes.NewReader(encryptedData)
+
+	// Pipes: src -> decrypt -> encrypt -> upload
+	prDecrypt, pwDecrypt := io.Pipe()
+	prEncrypt, pwEncrypt := io.Pipe()
+
+	// Stage 1: decrypt
+	go func() {
+		defer pwDecrypt.Close()
+		if err := DecryptStream(src, pwDecrypt, privKey); err != nil {
+			pwDecrypt.CloseWithError(err)
+		}
+	}()
+
+	// Stage 2: encrypt
+	go func() {
+		defer pwEncrypt.Close()
+		if err := EncryptStream(prDecrypt, pwEncrypt, pubKeys); err != nil {
+			pwEncrypt.CloseWithError(err)
+		}
+	}()
+
+	// Stage 3: upload encrypted stream to S3
+	_, err := s3Client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket: &bucket,
+		Key:    &key,
+		Body:   prEncrypt,
+	})
+	return err
 }
