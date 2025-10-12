@@ -9,6 +9,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	s3 "github.com/aws/aws-sdk-go-v2/service/s3"
 	log "github.com/sirupsen/logrus"
 
@@ -121,6 +123,7 @@ func EncryptFile(filePath string, armoredPubKeys []string) (encryptedFilePath st
 
 	return tmpFile.Name(), nil
 }
+
 func DecryptBytes(input []byte, destinationPath *string, armoredPrivKey *string) (decryptedFilePath string, err error) {
 
 	keyObj, err := crypto.NewKeyFromArmored(*armoredPrivKey)
@@ -221,68 +224,81 @@ func DecryptStream(src io.Reader, dst io.Writer, armoredPrivKey string) error {
 	return err
 }
 
-func ReEncryptS3Object(
-	ctx context.Context,
-	s3Client *s3.Client,
-	bucket, key string,
-	privKey string,
-	pubKeys []string,
-	out io.Writer,
-) error {
+// func ReEncryptS3Object(
+// 	ctx context.Context,
+// 	s3Client *s3.Client,
+// 	bucket, key *string,
+// 	privKey *string,
+// 	pubKeys []string,
+// 	out io.Writer,
+// ) error {
 
-	// Download object as stream
-	obj, err := s3Client.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: &bucket,
-		Key:    &key,
-	})
-	if err != nil {
-		return err
-	}
-	defer obj.Body.Close()
+// 	// Download object as stream
+// 	obj, err := s3Client.GetObject(ctx, &s3.GetObjectInput{
+// 		Bucket: bucket,
+// 		Key:    key,
+// 	})
+// 	if err != nil {
+// 		return err
+// 	}
+// 	defer obj.Body.Close()
 
-	// Create streaming pipeline: decrypt → encrypt
-	prDecrypt, pwDecrypt := io.Pipe()
-	prEncrypt, pwEncrypt := io.Pipe()
+// 	// Create streaming pipeline: decrypt → encrypt
+// 	prDecrypt, pwDecrypt := io.Pipe()
+// 	prEncrypt, pwEncrypt := io.Pipe()
 
-	// Stage 1: decrypt S3 object
-	go func() {
-		defer pwDecrypt.Close()
-		if err := DecryptStream(obj.Body, pwDecrypt, privKey); err != nil {
-			pwDecrypt.CloseWithError(err)
-		}
-	}()
+// 	// Stage 1: decrypt S3 object
+// 	go func() {
+// 		defer pwDecrypt.Close()
+// 		if err := DecryptStream(obj.Body, pwDecrypt, string(*privKey)); err != nil {
+// 			pwDecrypt.CloseWithError(err)
+// 		}
+// 	}()
 
-	// Stage 2: encrypt decrypted output
-	go func() {
-		defer pwEncrypt.Close()
-		if err := EncryptStream(prDecrypt, pwEncrypt, pubKeys); err != nil {
-			pwEncrypt.CloseWithError(err)
-		}
-	}()
+// 	// Stage 2: encrypt decrypted output
+// 	go func() {
+// 		defer pwEncrypt.Close()
+// 		if err := EncryptStream(prDecrypt, pwEncrypt, pubKeys); err != nil {
+// 			pwEncrypt.CloseWithError(err)
+// 		}
+// 	}()
 
-	// Stage 3: stream to output (could be file or another S3 upload)
-	_, err = io.Copy(out, prEncrypt)
-	return err
-}
-
+//		// Stage 3: stream to output (could be file or another S3 upload)
+//		_, err = io.Copy(out, prEncrypt)
+//		return err
+//	}
 func ReEncryptAndUploadToS3(
 	ctx context.Context,
 	s3Client *s3.Client,
-	bucket, key string,
-	encryptedData []byte,
-	privKey string,
+	bucket, key *string,
+	privKey []byte,
 	pubKeys []string,
 ) error {
-	src := bytes.NewReader(encryptedData)
+	// 1. Download the object
+	obj, err := s3Client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: bucket,
+		Key:    key,
+	})
+	if err != nil {
+		return fmt.Errorf("s3 get: %w", err)
+	}
+	defer obj.Body.Close()
 
-	// Pipes: src -> decrypt -> encrypt -> upload
+	// 2. Read the full object into memory
+	data, err := io.ReadAll(obj.Body)
+	if err != nil {
+		return fmt.Errorf("read s3 object: %w", err)
+	}
+	src := bytes.NewReader(data)
+
+	// 3. Pipes for streaming decryption -> encryption
 	prDecrypt, pwDecrypt := io.Pipe()
 	prEncrypt, pwEncrypt := io.Pipe()
 
 	// Stage 1: decrypt
 	go func() {
 		defer pwDecrypt.Close()
-		if err := DecryptStream(src, pwDecrypt, privKey); err != nil {
+		if err := DecryptStream(src, pwDecrypt, string(privKey)); err != nil {
 			pwDecrypt.CloseWithError(err)
 		}
 	}()
@@ -295,11 +311,16 @@ func ReEncryptAndUploadToS3(
 		}
 	}()
 
-	// Stage 3: upload encrypted stream to S3
-	_, err := s3Client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket: &bucket,
-		Key:    &key,
+	// 4. Upload re-encrypted stream via s3manager.Uploader
+	uploader := manager.NewUploader(s3Client)
+	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
+		Bucket: bucket,
+		Key:    aws.String(fmt.Sprintf("a_%s.reenc", *key)),
 		Body:   prEncrypt,
 	})
-	return err
+	if err != nil {
+		return fmt.Errorf("s3 upload: %w", err)
+	}
+
+	return nil
 }
