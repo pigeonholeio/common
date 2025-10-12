@@ -7,6 +7,7 @@ OPENAPI_SPEC := openapi-spec.yaml
 # Tools
 OAPI_CODEGEN := oapi-codegen
 GO := go
+RELEASE_TAG := 0.1.0
 
 .PHONY: all api server cli clean
 
@@ -34,7 +35,11 @@ commit:
 	cd utils && go build
 	git add .
 	git commit -m'updated sdk'
+	git tag ${RELEASE_TAG} --force
 	git push
+	git push --tags --force
+
+
 patch:
 	@if ! grep -q '	PostAuthOidcCleverHandler(ctx context.Context, provider \*OIDCProvider, idPToken \*OIDCProviderToken, reqEditors ...RequestEditorFn) (\*http.Response, error)' ../cli/src/sdk/client.gen.go; then \
 		sed -i.bak '/PostAuthOidcHandlerGeneric(ctx context.Context, body PostAuthOidcHandlerGenericJSONRequestBody, reqEditors \.\.\.RequestEditorFn) (\*http.Response, error)/a\
