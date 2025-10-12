@@ -216,6 +216,7 @@ func DecryptStream(src io.Reader, dst io.Writer, armoredPrivKey string) error {
 
 	decryptReader, err := privRing.DecryptStream(src, nil, 0)
 	if err != nil {
+
 		return err
 	}
 	// defer decryptReader.Close()
@@ -224,49 +225,6 @@ func DecryptStream(src io.Reader, dst io.Writer, armoredPrivKey string) error {
 	return err
 }
 
-// func ReEncryptS3Object(
-// 	ctx context.Context,
-// 	s3Client *s3.Client,
-// 	bucket, key *string,
-// 	privKey *string,
-// 	pubKeys []string,
-// 	out io.Writer,
-// ) error {
-
-// 	// Download object as stream
-// 	obj, err := s3Client.GetObject(ctx, &s3.GetObjectInput{
-// 		Bucket: bucket,
-// 		Key:    key,
-// 	})
-// 	if err != nil {
-// 		return err
-// 	}
-// 	defer obj.Body.Close()
-
-// 	// Create streaming pipeline: decrypt → encrypt
-// 	prDecrypt, pwDecrypt := io.Pipe()
-// 	prEncrypt, pwEncrypt := io.Pipe()
-
-// 	// Stage 1: decrypt S3 object
-// 	go func() {
-// 		defer pwDecrypt.Close()
-// 		if err := DecryptStream(obj.Body, pwDecrypt, string(*privKey)); err != nil {
-// 			pwDecrypt.CloseWithError(err)
-// 		}
-// 	}()
-
-// 	// Stage 2: encrypt decrypted output
-// 	go func() {
-// 		defer pwEncrypt.Close()
-// 		if err := EncryptStream(prDecrypt, pwEncrypt, pubKeys); err != nil {
-// 			pwEncrypt.CloseWithError(err)
-// 		}
-// 	}()
-
-//		// Stage 3: stream to output (could be file or another S3 upload)
-//		_, err = io.Copy(out, prEncrypt)
-//		return err
-//	}
 func ReEncryptAndUploadToS3(
 	ctx context.Context,
 	s3Client *s3.Client,
@@ -279,10 +237,12 @@ func ReEncryptAndUploadToS3(
 		Bucket: bucket,
 		Key:    key,
 	})
+	fmt.Println(("Downloaded object from s3"))
 	if err != nil {
 		return fmt.Errorf("s3 get: %w", err)
 	}
 	defer obj.Body.Close()
+	fmt.Println(("deferred object from s3"))
 
 	// 2. Read the full object into memory
 	data, err := io.ReadAll(obj.Body)
@@ -290,14 +250,17 @@ func ReEncryptAndUploadToS3(
 		return fmt.Errorf("read s3 object: %w", err)
 	}
 	src := bytes.NewReader(data)
+	fmt.Println(("src object from s3"))
 
 	// 3. Pipes for streaming decryption -> encryption
 	prDecrypt, pwDecrypt := io.Pipe()
 	prEncrypt, pwEncrypt := io.Pipe()
+	fmt.Println(("set up pipes"))
 
 	// Stage 1: decrypt
 	go func() {
 		defer pwDecrypt.Close()
+
 		if err := DecryptStream(src, pwDecrypt, string(privKey)); err != nil {
 			pwDecrypt.CloseWithError(err)
 		}
