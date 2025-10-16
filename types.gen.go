@@ -205,14 +205,8 @@ type GetUserParams struct {
 	Email         []openapi_types.Email `form:"email" json:"email"`
 }
 
-// PostAuthOidcHandlerGenericJSONRequestBody defines body for PostAuthOidcHandlerGeneric for application/json ContentType.
-type PostAuthOidcHandlerGenericJSONRequestBody = OIDCProviderToken
-
-// PostAuthOidcHandlerGenericJwtJSONRequestBody defines body for PostAuthOidcHandlerGenericJwt for application/json ContentType.
-type PostAuthOidcHandlerGenericJwtJSONRequestBody = OIDCProviderToken
-
-// PostAuthOidcHandlerGithubJSONRequestBody defines body for PostAuthOidcHandlerGithub for application/json ContentType.
-type PostAuthOidcHandlerGithubJSONRequestBody = OIDCProviderToken
+// PostAuthOidcHandlerProviderJSONRequestBody defines body for PostAuthOidcHandlerProvider for application/json ContentType.
+type PostAuthOidcHandlerProviderJSONRequestBody = OIDCProviderToken
 
 // PostSecretJSONRequestBody defines body for PostSecret for application/json ContentType.
 type PostSecretJSONRequestBody = CreateSecretEnvelopeOptions

@@ -250,7 +250,6 @@ func ReEncryptAndUploadToS3(
 		return fmt.Errorf("read s3 object: %w", err)
 	}
 	src := bytes.NewReader(data)
-	fmt.Println(("src object from s3"))
 
 	// 3. Pipes for streaming decryption -> encryption
 	prDecrypt, pwDecrypt := io.Pipe()
@@ -260,8 +259,10 @@ func ReEncryptAndUploadToS3(
 	// Stage 1: decrypt
 	go func() {
 		defer pwDecrypt.Close()
+		fmt.Println("decrypting stream")
 
 		if err := DecryptStream(src, pwDecrypt, string(privKey)); err != nil {
+			fmt.Println("decrypting stream error")
 			pwDecrypt.CloseWithError(err)
 		}
 	}()
@@ -269,7 +270,10 @@ func ReEncryptAndUploadToS3(
 	// Stage 2: encrypt
 	go func() {
 		defer pwEncrypt.Close()
+		fmt.Println("encrypting stream")
 		if err := EncryptStream(prDecrypt, pwEncrypt, pubKeys); err != nil {
+			fmt.Println(pubKeys)
+			fmt.Println("encrypting stream error")
 			pwEncrypt.CloseWithError(err)
 		}
 	}()
