@@ -60,6 +60,7 @@ type OIDCProvider struct {
 	Name          *string   `json:"name,omitempty"`
 	Scopes        *[]string `json:"scopes,omitempty"`
 	TokenUrl      *string   `json:"tokenUrl,omitempty"`
+	UserInfoUrl   *string   `json:"userInfoUrl"`
 }
 
 // OIDCProviderToken This is used to pass the IdP issued id/access token to exchange it for a PigeonHole access token

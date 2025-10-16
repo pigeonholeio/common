@@ -250,6 +250,9 @@ components:
         handlerUrl:
           type: string
           nullable: true
+        userInfoUrl:
+          type: string
+          nullable: true
         authUrl:
           type: string
           nullable: false
