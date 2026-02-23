@@ -112,6 +112,12 @@ components:
           schema:
             allOf:
             - $ref: '#/components/schemas/GeneralMessage'
+    QuotaExceededResponse:
+      description: Quota Exceeded Error Response
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/QuotaExceededError'
     GeneralMessageWithDownloadResponse:
       description: General Message Response with Download URL
       content:
@@ -125,6 +131,9 @@ components:
                   type: string
                 secretReference:
                   type: string
+                recipientKeyFingerprint:
+                  type: string
+                  nullable: true
     GeneralMessageWithKeyResponse:
       description: General Message Response
       content:
@@ -241,6 +250,9 @@ components:
         accessToken:
           type: string
           nullable: false
+        audience:
+          type: string
+          nullable: true
     OIDCProvider:
       type: object
       properties:
@@ -270,6 +282,9 @@ components:
           nullable: false
           items:
             type: string
+        audience:
+          type: string
+          nullable: true
         # tokenHandlerEndpoint:
         #   type: string
         #   nullable: false
@@ -369,9 +384,14 @@ components:
         expiration:
           type: string
           format: date-time
+        total_payload_size:
+          description: Total size in bytes of the encrypted payload.
+          type: integer
+          format: int64
       required:
         - recipient_ids
         - reference
+        - total_payload_size
       type: object
     NewKey:
       properties:
@@ -424,6 +444,9 @@ components:
           format: int64
         onetime:
           type: boolean
+        recipientKeyFingerprint:
+          type: string
+          nullable: true
       type: object
     Tenant:
       properties:
@@ -475,11 +498,138 @@ components:
       required:
         - message
 
+    QuotaExceededError:
+      type: object
+      properties:
+        code:
+          type: integer
+          description: HTTP status code
+        message:
+          type: string
+          description: Human-readable error message
+        quota_type:
+          type: string
+          enum:
+            - secrets_count
+            - total_bytes
+            - file_size
+          description: Type of quota that was exceeded
+        current_usage:
+          type: integer
+          format: int64
+          description: Current usage for this quota type in bytes or count
+        limit:
+          type: integer
+          format: int64
+          description: Maximum allowed for this quota type
+        requested:
+          type: integer
+          format: int64
+          description: Requested size/count that would be added (applicable for bytes/file size)
+      required:
+        - code
+        - message
+        - quota_type
+        - current_usage
+        - limit
+
     name:
       type: object
       properties:
         property:
-          type: integer 
+          type: integer
+    CreateEphemeralUserRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address for the ephemeral user
+      required:
+        - email
+    CreateEphemeralUserResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        keys:
+          type: array
+          items:
+            $ref: '#/components/schemas/Key'
+    AnalyticsResponse:
+      type: object
+      properties:
+        secrets_sent:
+          type: integer
+          format: int64
+        secrets_received:
+          type: integer
+          format: int64
+        active_secrets_sent:
+          type: integer
+          format: int64
+        max_secrets_quota:
+          type: integer
+          format: int64
+        total_bytes_sent:
+          type: integer
+          format: int64
+        max_bytes_quota:
+          type: integer
+          format: int64
+    GeneralMessageWithAnalyticsResponse:
+      allOf:
+        - $ref: '#/components/schemas/GeneralMessage'
+        - type: object
+          properties:
+            analytics:
+              $ref: '#/components/schemas/AnalyticsResponse'
+    UserCheckResponse:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email address checked
+        exists:
+          type: boolean
+          description: Whether the user exists
+      required:
+        - email
+        - exists
+    SendInvitesResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Status message
+        sent_count:
+          type: integer
+          description: Number of invitations successfully queued
+        failed_emails:
+          type: array
+          items:
+            type: string
+            format: email
+          description: List of emails that failed to be invited
+      required:
+        - message
+        - sent_count
+        - failed_emails
+    UsersListResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Status message
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+          description: List of authenticated users
+      required:
+        - message
+        - users
   securitySchemes:
     BearerAuth:
       type: http
@@ -583,6 +733,10 @@ paths:
           $ref: '#/components/responses/GeneralMessageWithSecretEnvelopeResponse'
         '406':
           $ref: '#/components/responses/GeneralMessageResponse'
+        '413':
+          $ref: '#/components/responses/QuotaExceededResponse'
+        '429':
+          $ref: '#/components/responses/QuotaExceededResponse'
         <<: *commonErrors
       security:
         - BearerAuth: []
@@ -635,7 +789,7 @@ paths:
           schema:
             type: string
       responses:
-        '307':
+        '200':
           description: Redirect to the file's presigned url to securely download the file direct from S3
           $ref: '#/components/responses/GeneralMessageWithDownloadResponse'
         <<: *commonErrors
@@ -656,29 +810,66 @@ paths:
       summary: Retrieve all items from the given schema
   /user:
     get:
-      description: Retrieve a list of users given a query e.g. user email, shortcode or id
+      description: Check if a user exists by email or retrieve a list of users
       parameters:
         - in: query
+          name: email
+          required: false
+          schema:
+            type: string
+            format: email
+          description: Single email to check user existence
+        - in: query
           name: ephemeralkeys
-          required: true
+          required: false
           schema:
             type: boolean
-        - in: query
-          name: email
-          required: true
-          schema:
-            type: array
-            items:
-              type: string
-              format: email
       responses:
         '200':
-          $ref: '#/components/responses/GeneralMessageWithUsersResponse'
-          description: Successfully retrieved users
+          description: User existence check or user list retrieval
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/UserCheckResponse'
+                  - $ref: '#/components/schemas/UsersListResponse'
         <<: *commonErrors
       security:
         - BearerAuth: []
-      summary: Retrieve all items from the given schema
+      summary: Check user existence or retrieve users
+      tags:
+        - User
+  /user/invite:
+    post:
+      description: Send invitation emails to recipients
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                recipients:
+                  type: array
+                  items:
+                    type: string
+                    format: email
+                  minItems: 1
+                  maxItems: 10
+                  description: List of email addresses to invite
+              required:
+                - recipients
+        required: true
+      responses:
+        '200':
+          description: Invitations queued successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SendInvitesResponse'
+        <<: *commonErrors
+      security:
+        - BearerAuth: []
+      summary: Send invitations to recipients
       tags:
         - User
   /user/me:
@@ -692,6 +883,22 @@ paths:
       security:
         - BearerAuth: []
       summary: Get my user object
+      tags:
+        - User
+  /user/analytics:
+    get:
+      description: Get user analytics and usage statistics
+      responses:
+        '200':
+          description: Successfully retrieved analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralMessageWithAnalyticsResponse'
+        <<: *commonErrors
+      security:
+        - BearerAuth: []
+      summary: Get user analytics and usage statistics
       tags:
         - User
   # /user/me/rotate-shortcode:
@@ -917,5 +1124,29 @@ paths:
           description: Successfully retrieved items
         <<: *commonErrors
       summary: Retrieve all public information about a user
+      tags:
+        - User
+  /user/ephemeral-user:
+    post:
+      description: Create or retrieve ephemeral user with generated keys for secret sharing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEphemeralUserRequest'
+        required: true
+      responses:
+        '201':
+          description: Successfully created/retrieved ephemeral user with keys
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/GeneralMessage'
+                  - $ref: '#/components/schemas/CreateEphemeralUserResponse'
+        <<: *commonErrors
+      security:
+        - BearerAuth: []
+      summary: Create or retrieve ephemeral user with generated keys
       tags:
         - User
