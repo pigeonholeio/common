@@ -56,7 +56,7 @@ The spec (`common/openapi-spec.yaml`, carried forward and refined) defines the f
               + WebRTC DTLS-1.3 data channel ──── P2P ────▶  (Cloudflare Realtime TURN fallback)
 ```
 
-Store-and-forward payloads never transit as plaintext and (by default) never buffer in the Worker — they stream through to R2 (§4A). Real-time payloads flow peer-to-peer and never touch the server at all (§4B).
+Store-and-forward payloads flow **directly client↔R2 via presigned URLs** — the Worker is control-plane only and never touches payload bytes (§4A). Real-time payloads flow peer-to-peer and never touch the server at all (§4B).
 
 ---
 
@@ -64,10 +64,14 @@ Store-and-forward payloads never transit as plaintext and (by default) never buf
 
 Both modes move only **ciphertext** and reuse the same identity/device-key trust (§8, §9). Mode A is the default; Mode B is for when both peers are online and want direct real-time transfer.
 
-### 4A. Store-and-forward (recipient may be offline) — via R2
-- **Upload (default):** `request.body` (a `ReadableStream`) is piped straight into `env.BUCKET.put(key, request.body)` — the Worker never buffers the file, auth/quota/metadata are enforced inline, and **no static R2 credentials exist anywhere**. **R2 multipart** for large/resumable uploads.
-- **Download:** `env.BUCKET.get(key)` returns a streaming body; the Worker streams to the client honouring **HTTP Range** → resumable, progressive client-side decrypt.
-- **Onetime / burn-after-read:** gated by a **Durable Object** so "first successful read → mark consumed → delete from R2" is atomic and race-free.
+### 4A. Store-and-forward (recipient may be offline) — via R2, **presigned direct-to-R2**
+
+**LOCKED model: the Worker is control-plane only and never touches payload bytes.** All data flows **directly client↔R2** via **presigned URLs**, keeping Worker CPU/duration cost flat regardless of payload size (and R2 egress is free). Header and body are **separate objects** (§6.3): `secrets/<id>/hdr/<thumbprint>` + `secrets/<id>/body`.
+
+- **Upload:** Worker authenticates, checks quota, records metadata, then returns a **presigned PUT** URL (R2 multipart for large/resumable). Client uploads the body straight to R2; small PKESK header object(s) PUT likewise (or inline-POSTed to the Worker since tiny).
+- **Download (Option 3):** Worker authenticates, returns the **tiny `hdr` inline** + a **presigned GET** for `body`. Client concatenates header → body stream and decrypts. Worker does one small header read + URL signing — no payload streaming.
+- **Cost of this choice (accepted):** the Worker needs an **R2 S3 credential** (access key/secret) to sign presigned URLs → stored in **Secrets Store**. This is a deliberate trade away from the binding-only "no static R2 creds" option, in exchange for keeping the Worker out of the data path.
+- **Onetime / burn-after-read:** a **Durable Object** gates **issuance** — it hands out a **single-use, short-TTL** presigned URL (≈60s) and marks the secret consumed **on grant**. Semantics are therefore "**one download grant**," not "one confirmed delivery" (a failed fetch still burns). Optional stronger variant: client `POST …/consumed` receipt after successful decrypt → Worker deletes (but a misbehaving client can skip it). R2 event notifications fire on create/delete, **not reads**, so can't observe delivery.
 - **🔶 Client-side format:** OpenPGP streams poorly for ranged/resumable decrypt; a chunked AEAD (`age` / Tink-style) client-side makes streaming genuinely usable. Server stays format-agnostic — decide in the client workstream.
 
 ### 4B. Real-time direct peer-to-peer (both peers online) — via WebRTC, NAT-traversing
@@ -91,7 +95,7 @@ Goal (Rhys): direct device-to-device streaming that traverses NATs, secured by a
 | Durable Objects | atomic onetime/burn-after-read; per-user quota + rate counters; multipart session state |
 | Analytics Engine | powers `GET /user/analytics` + ops metrics (write events, query via SQL API) |
 | KV | low-latency cache: JWKS, OIDC provider metadata, recipient public keys |
-| Secrets Store | account-level write-only secrets: JWT signing key, OIDC client secret(s) |
+| Secrets Store | account-level write-only secrets: JWT signing key, OIDC client secret(s), **R2 S3 credential** (for signing presigned URLs) |
 | Queues | async R2 garbage-collection on expiry, invite emails, analytics fan-out |
 | Cron Triggers | scheduled expiry sweep (purge expired/consumed secrets from R2 + D1) |
 | Rate Limiting / Turnstile | abuse protection on `/user/ephemeral-user` + `/user/invite` |
@@ -139,7 +143,7 @@ OpenPGP is `[ PKESK per-recipient (session key wrapped to each pubkey) ] … [ S
 secrets/<id>/body             ← SEIPD bulk: written once, immutable, never rewritten
 secrets/<id>/hdr/<thumbprint> ← PKESK header(s): tiny, one per recipient/device
 ```
-Re-encrypt / add-device = write a new small `hdr/<thumbprint>` object (body never moves; no Range read, no read-modify-write race). Download = Worker streams `hdr` then `body` to reconstruct the OpenPGP message. This preserves the O(header) property within R2's immutability model and is cheaper than patching.
+Re-encrypt / add-device = write a new small `hdr/<thumbprint>` object (body never moves; no Range read, no read-modify-write race). Download = Worker returns `hdr` inline + a **presigned GET** for `body` (§4A Option 3); client concatenates and decrypts. This preserves the O(header) property within R2's immutability model and is cheaper than patching.
 
 Used for:
 - **Claim-time re-encryption (§6.1):** on claim, rewrap the ephemeral header to the recipient's real device key(s) — trivial regardless of how large the secret is, which removes the "re-encrypting on arrival is expensive / may be deferred" worry.
@@ -148,7 +152,7 @@ Used for:
 **⚠️ Placement = the zero-knowledge boundary.** Whoever performs the rewrap holds the unwrapping private key and briefly sees the plaintext **session key** → can decrypt the payload.
 - **Client-side rewrap (REQUIRED for the E2EE path):** recipient/existing-device does it locally; server never sees the session key. Still fast — only header bytes move.
 - **Worker-side rewrap:** fast but the Worker sees the session key ⇒ the server can decrypt ⇒ **breaks zero-knowledge**. Not used for E2EE secrets.
-- **Chosen split:** the **Worker does the I/O plumbing only** (serve the header object, accept a new tiny `hdr/<thumbprint>` object, stream the body); the **decrypt-and-rewrap stays in the client**. Worker-speed on the data path *and* zero-knowledge, because the Worker only ever moves ciphertext + wrapped keys.
+- **Chosen split:** the **Worker is control-plane only** — it returns the tiny `hdr` inline and presigns `body`; it never streams payload (§4A). The **decrypt-and-rewrap stays in the client**. Zero-knowledge holds because the Worker only ever handles ciphertext headers + wrapped keys + signed URLs, never the session key.
 
 ### 6.2 Server-held secrets
 
@@ -229,7 +233,7 @@ Require the binding to carry a **quorum of signatures from independent attesters
 2. **Pre-enrolment-secret policy** for new devices (accept / re-wrap / recovery key). → B3.
 3. **Onetime semantics** across multiple devices. → B2.
 4. **Client streaming crypto format** (chunked AEAD vs OpenPGP). → client workstream.
-5. **Download response shape** (stream vs JSON+URL). → B1 spec lock.
+5. ~~Download response shape~~ **LOCKED:** inline `hdr` + presigned GET for `body` (§4A Option 3); presigned direct-to-R2 both ways, Worker control-plane only.
 6. **OpenAPI tooling:** `@hono/zod-openapi` (spec-as-code) vs consume YAML via codegen. → B0.
 7. **Real-time (4B) scope:** ship P2P streaming in v1 or as a fast-follow? → affects B-phase ordering.
 
@@ -238,7 +242,7 @@ Require the binding to carry a **quorum of signatures from independent attesters
 ## 11. Build phases (greenfield — no cutover)
 
 - **B0 — Skeleton & contract.** TS/Hono repo `pigeonhole-server`; `wrangler.toml` with D1 + R2 + DO + Analytics + KV + Secrets Store bindings; OTEL wired to `otel.planesailing.io`; OpenAPI tooling chosen (decision 6); `/ping` live. Lock the refined spec (§2 🔶 edits) and generate types/clients.
-- **B1 — Streaming secret flow.** `POST /secret` (storage-agnostic envelope), streaming upload → R2 (+ multipart), `GET /secret/{id}/download` streaming + Range, `GET/DELETE /secret`, `GET /secret/{id}`. Onetime via DO. `expiration` + quota.
+- **B1 — Secret flow (presigned direct-to-R2).** `POST /secret` → presigned PUT (+ multipart) for body + header objects; `GET /secret/{id}/download` → inline `hdr` + presigned GET for `body` (§4A Option 3); `GET/DELETE /secret`, `GET /secret/{id}`. Header/body split objects (§6.3). Onetime via DO (single-use short-TTL grant). `expiration` + quota. R2 S3 cred in Secrets Store.
   - *Client (CLI) I/O routing* (deferred, not started — build alongside the CLI regen): retrieve streams to **stdout** when the payload came from piped stdin (archive = single `plain.txt`), else writes the file/folder to the dest path; honour `-`/TTY detection and `--output`. See §12. *(Rhys: hold, folded into plan 2026-10-19.)*
 - **B2 — Auth & identity.** OIDC/Authentik exchange, EdDSA JWT + JWKS, `/user*`, `GET /user/{id}/public`, invites via **Email Sending binding**, ephemeral/pre-join flow (link-fragment, §6). Settle decisions 1, 3.
 - **B3 — Multi-device + Layer-1 anti-MITM.** Device/session registry, per-device key enrolment w/ master-key signatures, multi-recipient send, device revoke, new-key notifications. Settle decision 2.
