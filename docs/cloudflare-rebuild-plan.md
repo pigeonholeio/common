@@ -130,6 +130,19 @@ Encrypt to a random content key; put the key in the link **fragment** (`…/s/<i
 
 **LOCKED:** ship **both** — **C (OpenBao) is the default** (delivers the "nothing to hand over" UX Rhys wants; bounded, well-managed escrow), and **B (OpenBao half ⊕ fragment half, 2-of-2)** is an explicit **"high-security send" toggle** where no single party — not even OpenBao — can decrypt (at the cost of an OOB fragment). Per-send choice, so the trust assumption is explicit, never implicit. Both live in a **separate claim module**, not the core API. Primitives: **HPKE (RFC 9180)** / `age` for the KEM-wrap, OpenBao **Transit** for the escrowed half, Shamir/XOR for the 2-of-2, **OPAQUE/PAKE** if we later want password-claim without the server seeing the password.
 
+### 6.3 Cheap re-encryption via PKESK header rewrap (O(header), not O(payload))
+
+OpenPGP is `[ PKESK per-recipient (session key wrapped to each pubkey) ] … [ SEIPD: bulk, encrypted once with the session key ]`. To re-encrypt to a new recipient you **only rewrap the session key**: decrypt it from an existing PKESK, re-wrap to the new public key, and **replace just the PKESK packets at the front** — the SEIPD bulk is untouched and its integrity tag stays valid. Fetch the first X bytes (R2 **Range**), rewrap, write the small header back. **Payload size is irrelevant.** (Generalises to `age` recipient stanzas.)
+
+Used for:
+- **Claim-time re-encryption (§6.1):** on claim, rewrap the ephemeral header to the recipient's real device key(s) — trivial regardless of how large the secret is, which removes the "re-encrypting on arrival is expensive / may be deferred" worry.
+- **Multi-device add-key (§8):** an existing trusted device rewraps the header to grant a newly-enrolled device access to old secrets — no payload re-upload.
+
+**⚠️ Placement = the zero-knowledge boundary.** Whoever performs the rewrap holds the unwrapping private key and briefly sees the plaintext **session key** → can decrypt the payload.
+- **Client-side rewrap (REQUIRED for the E2EE path):** recipient/existing-device does it locally; server never sees the session key. Still fast — only header bytes move.
+- **Worker-side rewrap:** fast but the Worker sees the session key ⇒ the server can decrypt ⇒ **breaks zero-knowledge**. Not used for E2EE secrets.
+- **Chosen split:** the **Worker does the I/O plumbing only** (serve the Range read of the header, accept the tiny header write-back); the **decrypt-and-rewrap stays in the client**. Worker-speed on the data path *and* zero-knowledge, because the Worker only ever moves ciphertext + wrapped keys.
+
 ### 6.2 Server-held secrets
 
 **The only secrets the server actually holds** (→ **Secrets Store**, not a KMS):
@@ -152,7 +165,7 @@ Instrument the Worker with `@microlabs/otel-cf-workers` — traces, metrics, log
 - Each device generates its **own** keypair locally and registers only its **public** key (`Key.reference` = device label). Private keys never leave the device; nothing to sync.
 - On send, the server returns **all** the recipient's current validated device keys; the client encrypts to all of them. Hybrid crypto wraps only the small symmetric key per device, so N devices add tiny header stanzas — **not** N payload copies.
 - **Device/session registry (D1):** `(device_id, user_id, key_thumbprint, label, created_at, last_seen, revoked)`; per-device JWT. Revoke a device = delete its key + session.
-- **🔶 Pre-enrolment secrets:** a new device can't read secrets sent before it existed (inherent to forward-secure E2EE). Options: (a) accept it; (b) device-to-device re-wrap from an online trusted device; (c) optional passphrase-wrapped recovery key as an extra recipient (weaker).
+- **🔶 Pre-enrolment secrets:** a new device can't read secrets sent before it existed (inherent to forward-secure E2EE). Options: (a) accept it; (b) device-to-device re-wrap from an online trusted device — **cheap via PKESK header rewrap, §6.3** (no payload re-upload); (c) optional passphrase-wrapped recovery key as an extra recipient (weaker).
 - **🔶 Onetime + multi-device:** first device to fetch wins (DO-gated). Confirm vs per-recipient onetime.
 
 ---
