@@ -132,7 +132,14 @@ Encrypt to a random content key; put the key in the link **fragment** (`…/s/<i
 
 ### 6.3 Cheap re-encryption via PKESK header rewrap (O(header), not O(payload))
 
-OpenPGP is `[ PKESK per-recipient (session key wrapped to each pubkey) ] … [ SEIPD: bulk, encrypted once with the session key ]`. To re-encrypt to a new recipient you **only rewrap the session key**: decrypt it from an existing PKESK, re-wrap to the new public key, and **replace just the PKESK packets at the front** — the SEIPD bulk is untouched and its integrity tag stays valid. Fetch the first X bytes (R2 **Range**), rewrap, write the small header back. **Payload size is irrelevant.** (Generalises to `age` recipient stanzas.)
+OpenPGP is `[ PKESK per-recipient (session key wrapped to each pubkey) ] … [ SEIPD: bulk, encrypted once with the session key ]`. To re-encrypt to a new recipient you **only rewrap the session key**: decrypt it from an existing PKESK, re-wrap to the new public key, and swap the PKESK — the SEIPD bulk is untouched and its integrity tag stays valid. **Payload size is irrelevant.** (Generalises to `age` recipient stanzas.)
+
+**R2 fact-check (verified Oct 2026):** ranged **reads** are supported (`get({range})` offset/length/suffix; S3 `Range` → `206`), **but R2 objects are immutable** — `put` overwrites the *whole* object; there is **no partial/byte-range PUT, append, or byte-range copy**. So you **cannot** patch the header at the front of a combined blob. **Therefore store header and body as separate objects:**
+```
+secrets/<id>/body             ← SEIPD bulk: written once, immutable, never rewritten
+secrets/<id>/hdr/<thumbprint> ← PKESK header(s): tiny, one per recipient/device
+```
+Re-encrypt / add-device = write a new small `hdr/<thumbprint>` object (body never moves; no Range read, no read-modify-write race). Download = Worker streams `hdr` then `body` to reconstruct the OpenPGP message. This preserves the O(header) property within R2's immutability model and is cheaper than patching.
 
 Used for:
 - **Claim-time re-encryption (§6.1):** on claim, rewrap the ephemeral header to the recipient's real device key(s) — trivial regardless of how large the secret is, which removes the "re-encrypting on arrival is expensive / may be deferred" worry.
@@ -141,7 +148,7 @@ Used for:
 **⚠️ Placement = the zero-knowledge boundary.** Whoever performs the rewrap holds the unwrapping private key and briefly sees the plaintext **session key** → can decrypt the payload.
 - **Client-side rewrap (REQUIRED for the E2EE path):** recipient/existing-device does it locally; server never sees the session key. Still fast — only header bytes move.
 - **Worker-side rewrap:** fast but the Worker sees the session key ⇒ the server can decrypt ⇒ **breaks zero-knowledge**. Not used for E2EE secrets.
-- **Chosen split:** the **Worker does the I/O plumbing only** (serve the Range read of the header, accept the tiny header write-back); the **decrypt-and-rewrap stays in the client**. Worker-speed on the data path *and* zero-knowledge, because the Worker only ever moves ciphertext + wrapped keys.
+- **Chosen split:** the **Worker does the I/O plumbing only** (serve the header object, accept a new tiny `hdr/<thumbprint>` object, stream the body); the **decrypt-and-rewrap stays in the client**. Worker-speed on the data path *and* zero-knowledge, because the Worker only ever moves ciphertext + wrapped keys.
 
 ### 6.2 Server-held secrets
 
