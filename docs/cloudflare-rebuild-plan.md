@@ -356,10 +356,14 @@ Quota is the **only** abuse control (§13). Enforced via the spec's `413/429` + 
 - **Pro (paid):** large per-transfer (100 GB–1 TB), custom/no expiry, high allowance.
 - **Team (per-domain tenant):** org-wide pooling, domain admin, seat-based.
 
-## 15. Other ideas (parked — not committed, worth considering)
+## 15. Roadmap features (accepted 2026-10-21)
 
-- **Machine / workload recipients (CI/CD secret delivery).** Let a *workload* be a recipient via its OIDC identity (GitHub Actions / GitLab CI / cloud workload identity) — `pigeonhole send --to <workload>` drops secrets straight into a pipeline or service account. Strong B2B/monetisation angle and a natural fit for the IdP/tenant model.
+Accepted into the roadmap (beyond core B0–B7). **Workload recipients** is the near-term differentiator (fast-follow after B3); the rest are CLI-workstream items.
+
+- **Machine / workload recipients (CI/CD secret delivery) — headline feature.** A *workload* (not a person) can be a recipient, authenticated by its **OIDC workload identity** — GitHub Actions / GitLab CI OIDC tokens or cloud workload identity, federated through Authentik like any other provider. `pigeonhole send --to <workload-ref>` encrypts to the workload's enrolled key so a pipeline/service account decrypts at runtime. Fits the IdP/tenant model directly (workload identity → tenant/domain), reuses device-key enrolment (a workload enrols a key like a device), and is a clean **B2B/monetisation wedge**. *Design notes:* ephemeral CI runners ⇒ short-lived enrolment keyed to the OIDC token's `sub`/`repo`/`job` claims; onetime + short TTL suit single-run consumption. **Phase: fast-follow after B3** (same enrolment primitive).
 - **Signed manifest = cryptographic receipt (proof-of-send).** The §4D signature is already a non-repudiable record that X sent Y a payload with hash H at time T — a compliance/audit selling point ("prove the credentials were delivered"). ⚠️ **Deliberate choice:** signing gives **non-repudiation/accountability** (good for business secret-sharing) at the cost of **deniability** (unlike Signal). Fine for this product, but name it.
 - **Send-to-self / device sync.** First-class "send to my other device" — a very common real use (move an env file / SSH key between your machines), and it exercises the multi-device re-wrap (§6.3) nicely.
 - **CLI ergonomics pack.** `--expire 1h`, `--max-downloads N`, **QR code** for wormhole rendezvous codes, clipboard in/out (`send` from clipboard / `receive` to clipboard), shell completion, and a local **recipient address book** (with pinned master fingerprints → doubles as TOFU store for §9).
 - **Air-gapped / offline mode.** Because the §4D envelope is self-describing and signed, you can encrypt locally and move the blob by *any* channel (USB/sneakernet), decrypt later — no server round-trip. On-brand for security-conscious users.
+
+**Build phases:** add **B4.5 — Workload recipients** (fast-follow after B3): workload-OIDC enrolment (GH Actions/GitLab CI/cloud), `send --to <workload>`, short-lived keys bound to OIDC claims, onetime+TTL defaults. Receipt/send-to-self/ergonomics/air-gapped ride the CLI workstream.
