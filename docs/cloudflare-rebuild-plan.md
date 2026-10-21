@@ -292,7 +292,7 @@ Require the binding to carry a **quorum of signatures from independent attesters
 - **B2 — Auth & identity.** OIDC/Authentik (device-code flow for CLI), EdDSA JWT + JWKS + **KV revocation denylist** (short-TTL + refresh), `/user*`, `GET /user/{id}/public`, **tenant = verified email domain**, invites via **Email Sending binding**, pre-join flow (OpenBao Option C default + 2-of-2 toggle, §6.1), unclaimed-secret TTL + GC, notification defaults (§1). Settle decision 3.
 - **B3 — Multi-device + Layer-1 anti-MITM.** Device/session registry, per-device key enrolment w/ master-key signatures, multi-recipient send, device revoke (→ denylist), new-key notifications, cheap re-wrap for new-device old-secret access (§6.3). Settle decision 2.
 - **B4 — Real-time direct P2P (4B).** Signaling Durable Object (WebSocket), device-key-signed SDP/ICE, Cloudflare Realtime TURN wiring, **Pion in CLI** (nestbox parked). **Wormhole-style rendezvous** (sender-first short code, either-order arrival, reconnect/resume, SAS confirm + `--force`, optional SPAKE2), **inbound validation** (`--ref`/`--from`/`--accept-any`/`--yes`), **signed usage reports → Analytics Engine**. Separate from the REST API. *(Order vs B5 per decision 7.)*
-- **B5 — Platform hardening.** `/user/analytics` on Analytics Engine; Queues + Cron expiry GC; rate limiting + Turnstile; quota/billing metering; D1 backup/DR; OTEL coverage audit.
+- **B5 — Platform hardening.** `/user/analytics` on Analytics Engine; Queues + Cron expiry GC; rate limiting; **quota enforcement per §14** (beta single-tier, tier-config schema for later); OTEL coverage audit. *(GDPR erasure + D1 backup/DR deferred, §13.)*
 - **B6 — Launch readiness.** End-to-end CLI against prod Worker; `api.pigeonhole.io` DNS; **security audit** (crypto review, manifest-parser fuzzing, interop vectors); docs/blog (OpenPGP story).
 - **B7 — Key Transparency (Layer 2).** Merkle log, inclusion/consistency proofs, client self-audit, STH gossip/witness. Optional Layer 3 anchors (WKD/DANE, IdP co-sign).
 
@@ -313,15 +313,15 @@ Areas the plan hasn't covered yet. Tier 1 is security-critical and should be dec
 
 ### Tier 1 — decide before building
 - ✅ **Account & key recovery — RESOLVED: accept loss.** No server-side master-key backup (not even encrypted). IdP gives identity continuity (new master re-attested to same email, §9.2); only past ciphertext is lost. Optional client-side hedges: ≥2 devices, or user-exported offline master key. (§1 batch 2)
-- **JWT revocation.** Tokens are stateless; device-revoke/logout must actually invalidate them → short-TTL access tokens + refresh, plus a **revocation denylist in KV** keyed by device/session. → **B2.** (Still to build, but approach locked.)
+- ✅ **JWT revocation — RESOLVED: natural expiry, no denylist.** Keep access-token TTL modest to bound the window. Device-key removal stops *future* sends immediately (senders won't encrypt to a removed key); a removed device's still-valid token can read already-sent secrets until it expires — accepted. (Rhys 2026-10-21)
 - ⏸️ **Browser E2EE trust — DEFERRED with `nestbox`** (CLI-first). Revisit when the web client is unparked: CSP/SRI/minimal audited deps, non-extractable keys where possible.
 - ✅ **Metadata privacy — RESOLVED: retain + disclose.** Metadata (size/counts/who→whom/when) is deliberately kept as the **monetisation basis**; content stays zero-knowledge. Obligation: disclose in privacy policy, minimise to billing needs. (§1 batch 2)
 - ✅ **Crypto format — RESOLVED: OpenPGP** (SEIPD v2 AEAD; `gopenpgp`; x25519 enc / ed25519 sign; PQ posture later). (§1 batch 2, §4A)
 
 ### Tier 2 — decide before launch
-- **Abuse / anti-spam / content liability.** Anyone who knows an email can send → spam, unsolicited/illegal content as a store-and-forward conduit. Need recipient **opt-in/blocklist**, report path, sender reputation, and a documented takedown stance (we can delete ciphertext-by-reference but can't inspect content). Rate-limit/Turnstile (§5) is only part of it. **Still open.**
-- ✅ **Tenant model — RESOLVED: email domain.** Tenant = verified-email domain across upstream providers; custom domains = orgs (DNS-TXT proof), freemail = individuals (§1 batch 2). **Still open:** free/paid tiers + per-user/tenant quota caps (billing uses the retained metadata).
-- 🟡 **Retention / deletion / UK-GDPR — PARTLY RESOLVED:** unclaimed/pre-join secrets expire at default/overridable TTL → GC (§6.1). **Still to design:** orphaned/incomplete-multipart cleanup, right-to-erasure flow, **D1 backup/DR**.
+- ✅ **Abuse / anti-spam / content liability — RESOLVED: quota limits only.** No blocklist/report/reputation system; the per-user/tenant **quota caps (§14)** are the abuse control. (Rhys 2026-10-21)
+- ✅ **Tenant model — RESOLVED: email domain** (§1 batch 2). **Quota/tiers now defined — §14.**
+- 🟡 **Retention / deletion / UK-GDPR — DEFERRED ("sort later").** Done: unclaimed/pre-join TTL→GC (§6.1). Later: orphaned/incomplete-multipart cleanup, right-to-erasure flow, **D1 backup/DR**.
 - ✅ **Notifications — RESOLVED (common-practice defaults).** Email on new secret/invite, minimal content + claim link, recipient on by default + toggle, optional sender receipt, rate-limited; P2P none; CLI polls. (§1 batch 2)
 - **Security audit before launch.** Crypto is subtly breakable: external review, manifest-parser fuzzing, interop test vectors, key-continuity/transparency verification tests. → **B6.**
 
@@ -331,3 +331,35 @@ Areas the plan hasn't covered yet. Tier 1 is security-critical and should be dec
 - **Data residency** (R2/D1 region, UK/EU jurisdiction controls).
 - **Security audit log** (key enrolment, device revoke, failed auth) — distinct from OTEL telemetry.
 - **Admin/support tooling** (account/abuse/quota ops without content access).
+
+---
+
+## 14. Quotas & tiers
+
+Quota is the **only** abuse control (§13). Enforced via the spec's `413/429` + `QuotaExceededError`; aggregated per-user and per-**tenant** (email domain, §1). `total_payload_size` on `POST /secret` is the admission check; P2P debits on the DO-granted manifest size (§4B).
+
+**Reference point — WeTransfer 2026:** Free 3 GB/transfer, 10 transfers/30 days, 3-day expiry; Starter ($8) 300 GB/30-day; Ultimate ($23) unlimited transfers, 1 TB/transfer, custom expiry; Teams ($19/user). PigeonHole is a *secrets* tool (usually smaller than bulk file transfer) but supports large files/folders/streams, so defaults can be generous.
+
+**Beta (now): one tier, default-on, free, no Stripe.** Everyone gets the "paid-equivalent" allowance:
+| Knob | Beta value |
+|---|---|
+| Max per-transfer size | **20 GB** |
+| Per-user at-rest storage (store-and-forward) | **100 GB** |
+| Default retention / TTL | **7 days** (overridable per-send, max **30 days**) |
+| Max recipients per secret | **20** |
+| Rolling send allowance | **500 GB / 30 days** (soft anti-abuse cap, mostly unmetered) |
+| Devices per user | **10** |
+| Onetime / expiry / P2P | all enabled |
+
+**Post-beta tier structure (schema now, Stripe later).** Make tiers a config object `{ per_transfer_max, storage_max, retention_default, retention_max, monthly_allowance, max_recipients, max_devices, p2p_relay_cap }` resolved per user/tenant, so pricing slots in without code changes. Indicative future shape (WeTransfer-modelled):
+- **Free:** ~2 GB/transfer, 7-day expiry, modest monthly allowance.
+- **Pro (paid):** large per-transfer (100 GB–1 TB), custom/no expiry, high allowance.
+- **Team (per-domain tenant):** org-wide pooling, domain admin, seat-based.
+
+## 15. Other ideas (parked — not committed, worth considering)
+
+- **Machine / workload recipients (CI/CD secret delivery).** Let a *workload* be a recipient via its OIDC identity (GitHub Actions / GitLab CI / cloud workload identity) — `pigeonhole send --to <workload>` drops secrets straight into a pipeline or service account. Strong B2B/monetisation angle and a natural fit for the IdP/tenant model.
+- **Signed manifest = cryptographic receipt (proof-of-send).** The §4D signature is already a non-repudiable record that X sent Y a payload with hash H at time T — a compliance/audit selling point ("prove the credentials were delivered"). ⚠️ **Deliberate choice:** signing gives **non-repudiation/accountability** (good for business secret-sharing) at the cost of **deniability** (unlike Signal). Fine for this product, but name it.
+- **Send-to-self / device sync.** First-class "send to my other device" — a very common real use (move an env file / SSH key between your machines), and it exercises the multi-device re-wrap (§6.3) nicely.
+- **CLI ergonomics pack.** `--expire 1h`, `--max-downloads N`, **QR code** for wormhole rendezvous codes, clipboard in/out (`send` from clipboard / `receive` to clipboard), shell completion, and a local **recipient address book** (with pinned master fingerprints → doubles as TOFU store for §9).
+- **Air-gapped / offline mode.** Because the §4D envelope is self-describing and signed, you can encrypt locally and move the blob by *any* channel (USB/sneakernet), decrypt later — no server round-trip. On-brand for security-conscious users.
