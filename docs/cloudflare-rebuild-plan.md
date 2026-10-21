@@ -83,7 +83,25 @@ Because transfers go **directly client↔R2** (§4A) and decryption is client-si
   - **Upload progress:** `fetch()` **cannot** report upload progress reliably (no upload events; streaming request bodies need `duplex:'half'` + HTTP/2, patchy support). Use **`XMLHttpRequest` with `upload.onprogress`** for the presigned PUT — the standard, well-supported path.
   - **Download progress:** `fetch()` **can** — read `response.body.getReader()`, sum chunk lengths against `Content-Length`. Progressive decrypt reports naturally as chunks arrive.
   - **⚠️ Requires R2 bucket CORS config** allowing the web origin for direct PUT/GET and exposing `Content-Length` — needed for any browser direct-to-R2 transfer, progress or not.
-- **Real-time P2P (4B):** no `Content-Length`; count bytes at the app layer over the data channel, use `dataChannel.bufferedAmount` for send backpressure and `RTCPeerConnection.getStats()` (`bytesSent`/`bytesReceived`) for throughput. Show % if the total is known (file transfer), else live bytes/throughput.
+- **Real-time P2P (4B):** no `Content-Length`; the total comes from the signed **manifest `size`** (§4D). Count bytes at the app layer over the data channel, use `dataChannel.bufferedAmount` for send backpressure and `RTCPeerConnection.getStats()` (`bytesSent`/`bytesReceived`) for throughput. Show % when `size` is known, else live bytes/throughput.
+
+### 4D. Unified signed transfer manifest (fills the protocol gaps)
+
+A **signed metadata preamble** carried with every transfer — same envelope for both 4A and 4B. It fills four gaps at once and is the *same object* as the §9.1 transcript-authenticator (so no extra crypto):
+
+1. **size → progress** (supplies the length the P2P data channel lacks, §4C);
+2. **content hash → integrity** (end-to-end verify after decrypt);
+3. **sender signature → authenticity / anti-MITM** — signed by the sender's (master-attested) device key = the §9.1 transcript tag binding `hash ‖ recipient_pubkeys ‖ context`;
+4. **payload descriptor → output routing** — `kind: file|dir|stream`, `name`, `mime`, `mode`; this is what lets the CLI choose **stdout vs file vs folder** in-band (see §12 I/O routing) with no server involvement.
+
+**Envelope:**
+- **Manifest (signed, encrypted):** version, transfer-id, sender device-key fp + master-attestation ref, recipient key set, descriptor, `size?`, crypto `{format, chunk_size}`, options `{onetime, expiration}`, and a signature over all of it. (Filename/mime are sensitive → manifest is **inside** the E2EE envelope, not plaintext.)
+- **Payload:** per-chunk authenticated encryption (chunked AEAD — the §4A 🔶 format) so integrity is continuous and no whole-file hash is needed upfront; or OpenPGP SEIPD.
+- **Trailer (optional, signed):** final whole-content hash + byte count for an end-to-end completeness/integrity check.
+
+**Why preamble + per-chunk + trailer:** a whole-payload hash can't be known before reading the whole payload, which fights streaming. Per-chunk AEAD gives continuous integrity (works for unknown-size stdin); `size` in the preamble drives the progress bar when known; the trailer confirms the whole thing at the end.
+
+**Carriers:** store-and-forward → manifest is a signed `meta` sidecar object alongside `hdr`+`body` (§6.3); P2P → manifest is the first data-channel message, then chunks, then trailer. One protocol, two transports.
 
 ### 4B. Real-time direct peer-to-peer (both peers online) — via WebRTC, NAT-traversing
 Goal (Rhys): direct device-to-device streaming that traverses NATs, secured by a TLS-1.3-class channel keyed off the users' own public keys, **without orchestrating relay infra**.
@@ -267,6 +285,6 @@ Require the binding to carry a **quorum of signatures from independent attesters
 ## 12. Repos
 - **`common`** — OpenAPI spec (source of truth) + shared utils. Spec is the keystone.
 - **`pigeonhole-cli`** — Go/Cobra client; regen from spec; new upload path (streaming PUT) + master-key/device logic; **Pion** for 4B P2P.
-  - **I/O routing fix (Rhys-started):** on retrieve, if the payload originated from piped **stdin** (archive is a single `plain.txt`) → stream to **stdout**; if a **file/folder** → write to the dest path. Today `secret retrieve` always `MkdirAll`s a dir and untars into it (`secret.go` → `DecompressFile`), and send wraps stdin as `plain.txt` (`compressStdinData`). Fix = detect single-`plain.txt` archive → raw to stdout (unless `--output` given); else extract to dest. Honour `-` / TTY detection.
+  - **I/O routing fix (Rhys-started):** on retrieve, route output by the manifest **descriptor** (§4D) — `kind: stream` → **stdout**; `kind: file|dir` → write to dest path. (Cleaner than today's `plain.txt` heuristic; the signed descriptor carries intent explicitly.) Today `secret retrieve` always `MkdirAll`s a dir and untars (`secret.go` → `DecompressFile`), and send wraps stdin as `plain.txt` (`compressStdinData`). Honour `-`/TTY detection and `--output` override.
 - **`nestbox`** — React web app (CF Pages); client of the API; same key/device logic; browser WebRTC for 4B.
 - **`pigeonhole-server`** — **new**, TS/Hono/Workers. The subject of this plan.
