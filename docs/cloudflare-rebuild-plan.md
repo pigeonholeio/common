@@ -111,6 +111,8 @@ Goal (Rhys): direct device-to-device streaming that traverses NATs, secured by a
 - **Signaling (the only new infra, and it's tiny):** a **Durable Object** per pairing/session brokers the offer/answer/ICE-candidate exchange over WebSocket. **Media/data never touch it** — it only relays signed signaling blobs; the payload flows peer-to-peer. Kept as a **separate concern** from the REST API (own Worker/binding).
 - **Clients:** the CLI is Go → **Pion** (Go WebRTC); web (nestbox) → native browser WebRTC. Fully interoperable (CLI↔CLI, CLI↔web).
 - **When to use which:** 4A when the recipient is offline or it's fire-and-forget; 4B when both are online and want a direct, low-latency, relay-free stream. Same send UX, transport chosen at runtime (fall back A↔B).
+- **Usage metering (P2P is invisible to the Worker → clients report it):** since payload never transits the Worker, each peer POSTs a **signed completion report** (`transfer-id`, `size`, bytes transferred, trailer hash, outcome, duration, counterpart id, timestamp) to the Worker on finish → written to **Analytics Engine** + D1 quota ledger. **Metadata only — no plaintext, no content** (preserves zero-knowledge); signed by the device key so reports are authenticated.
+  - **Trust model:** self-reported, so a client could under-report to dodge quota. Mitigation: the signaling **DO already sees the signed manifest `size` at session setup**, so quota can be **debited on the declared size at grant time** (authoritative-ish), with the completion report reconciling actuals and flagging mismatches. Treat P2P metering as grant-committed + client-confirmed, not purely trust-the-client.
 
 ---
 
@@ -122,7 +124,7 @@ Goal (Rhys): direct device-to-device streaming that traverses NATs, secured by a
 | R2 | ciphertext payloads — streaming put/get, multipart, Range; encrypted at rest |
 | D1 (Drizzle) | metadata: users, keys, devices, secrets, tenants, OIDC providers |
 | Durable Objects | atomic onetime/burn-after-read; per-user quota + rate counters; multipart session state |
-| Analytics Engine | powers `GET /user/analytics` + ops metrics (write events, query via SQL API) |
+| Analytics Engine | powers `GET /user/analytics` + ops metrics; sink for **client-reported P2P usage** (§4B) since those transfers bypass the Worker |
 | KV | low-latency cache: JWKS, OIDC provider metadata, recipient public keys |
 | Secrets Store | account-level write-only secrets: JWT signing key, OIDC client secret(s), **R2 S3 credential** (for signing presigned URLs) |
 | Queues | async R2 garbage-collection on expiry, invite emails, analytics fan-out |
