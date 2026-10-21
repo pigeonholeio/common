@@ -74,6 +74,17 @@ Both modes move only **ciphertext** and reuse the same identity/device-key trust
 - **Onetime / burn-after-read:** a **Durable Object** gates **issuance** — it hands out a **single-use, short-TTL** presigned URL (≈60s) and marks the secret consumed **on grant**. Semantics are therefore "**one download grant**," not "one confirmed delivery" (a failed fetch still burns). Optional stronger variant: client `POST …/consumed` receipt after successful decrypt → Worker deletes (but a misbehaving client can skip it). R2 event notifications fire on create/delete, **not reads**, so can't observe delivery.
 - **🔶 Client-side format:** OpenPGP streams poorly for ranged/resumable decrypt; a chunked AEAD (`age` / Tink-style) client-side makes streaming genuinely usable. Server stays format-agnostic — decide in the client workstream.
 
+### 4C. Progress reporting (upload / download / stream)
+
+Because transfers go **directly client↔R2** (§4A) and decryption is client-side, **progress is measured entirely in the client** — the Worker isn't in the data path and isn't needed for it. The denominator is always known: `total_payload_size` (from `POST /secret`) and/or the `Content-Length` on the presigned GET.
+
+- **CLI (Go):** wrap the request body (upload) / response body (download) in a byte-counting `io.Reader`/`io.Writer` and drive a progress bar (`schollz/progressbar` or `vbauerster/mpb`). Works per-part for R2 multipart; resumable uploads resume the bar. Can extend the counter through the streaming decrypt stage for an end-to-end bar.
+- **Web (nestbox):**
+  - **Upload progress:** `fetch()` **cannot** report upload progress reliably (no upload events; streaming request bodies need `duplex:'half'` + HTTP/2, patchy support). Use **`XMLHttpRequest` with `upload.onprogress`** for the presigned PUT — the standard, well-supported path.
+  - **Download progress:** `fetch()` **can** — read `response.body.getReader()`, sum chunk lengths against `Content-Length`. Progressive decrypt reports naturally as chunks arrive.
+  - **⚠️ Requires R2 bucket CORS config** allowing the web origin for direct PUT/GET and exposing `Content-Length` — needed for any browser direct-to-R2 transfer, progress or not.
+- **Real-time P2P (4B):** no `Content-Length`; count bytes at the app layer over the data channel, use `dataChannel.bufferedAmount` for send backpressure and `RTCPeerConnection.getStats()` (`bytesSent`/`bytesReceived`) for throughput. Show % if the total is known (file transfer), else live bytes/throughput.
+
 ### 4B. Real-time direct peer-to-peer (both peers online) — via WebRTC, NAT-traversing
 Goal (Rhys): direct device-to-device streaming that traverses NATs, secured by a TLS-1.3-class channel keyed off the users' own public keys, **without orchestrating relay infra**.
 
