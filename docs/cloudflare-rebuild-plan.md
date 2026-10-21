@@ -295,3 +295,30 @@ Require the binding to carry a **quorum of signatures from independent attesters
   - **I/O routing fix (Rhys-started):** on retrieve, route output by the manifest **descriptor** (§4D) — `kind: stream` → **stdout**; `kind: file|dir` → write to dest path. (Cleaner than today's `plain.txt` heuristic; the signed descriptor carries intent explicitly.) Today `secret retrieve` always `MkdirAll`s a dir and untars (`secret.go` → `DecompressFile`), and send wraps stdin as `plain.txt` (`compressStdinData`). Honour `-`/TTY detection and `--output` override.
 - **`nestbox`** — React web app (CF Pages); client of the API; same key/device logic; browser WebRTC for 4B.
 - **`pigeonhole-server`** — **new**, TS/Hono/Workers. The subject of this plan.
+
+---
+
+## 13. Open gaps — not yet designed (gap sweep 2026-10-21)
+
+Areas the plan hasn't covered yet. Tier 1 is security-critical and should be decided **before** build; Tier 2 before launch; Tier 3 is engineering hygiene.
+
+### Tier 1 — decide before building
+- **Account & key recovery / loss.** Lose all devices + master key ⇒ sent secrets are **unrecoverable by design** (zero-knowledge). Need an explicit choice: (a) recovery passphrase/phrase that wraps a backup of the master key (user-held), (b) social/multi-device recovery, or (c) accept data loss. Drives master-key backup UX. **Biggest unresolved UX/security call.**
+- **JWT revocation.** Tokens are stateless; device-revoke/logout must actually invalidate them → short-TTL access tokens + refresh, plus a **revocation denylist in KV** keyed by device/session. Without this, "revoke a device" (§8) doesn't bite until expiry.
+- **Browser E2EE trust (nestbox).** The web client is the weakest link: private keys in the browser (IndexedDB/WebCrypto), and XSS or a JS supply-chain compromise = key theft. Needs strict **CSP, SRI, minimal audited deps** (openpgp.js / age-js), and a documented "the web app is higher-trust than the CLI" caveat. Prefer non-extractable WebCrypto keys where the format allows.
+- **Metadata privacy (explicit threat model).** Content is zero-knowledge, but the server sees **who → whom, when, how often, how big** — a social graph + traffic analysis. Decide what's retained, for how long, and whether to pad sizes / coarsen timing. State it honestly in the threat model.
+- **Crypto format + library lock (the §4A 🔶).** OpenPGP vs `age`/chunked-AEAD is foundational (drives streaming, the §4D manifest, re-encryption). Pick algorithms (x25519 today; ed25519 for signing; PQ posture later) and a specific audited library per platform.
+
+### Tier 2 — decide before launch
+- **Abuse / anti-spam / content liability.** Anyone who knows an email can send → spam, unsolicited/illegal content as a store-and-forward conduit. Need recipient **opt-in/blocklist**, report path, sender reputation, and a documented takedown stance (we can delete ciphertext-by-reference but can't inspect content). Rate-limit/Turnstile (§5) is only part of it.
+- **Quota / billing / tenant model.** Spec has `413/429` + a `Tenant` entity but no defined semantics. Define free vs paid tiers, per-user/per-tenant storage + transfer caps, and what a Tenant *is* (B2B orgs?). Drives quota logic.
+- **Retention / deletion / UK-GDPR.** Expiry GC (Cron+Queue, §5) plus: orphaned-upload / incomplete-multipart cleanup, unclaimed-escrow TTL (§6), right-to-erasure, and **D1 backup/DR** (lose D1 metadata ⇒ secrets unrecoverable even if R2 survives).
+- **Notifications.** How a recipient learns they have a secret — Email Sending (§5), web, CLI poll, push? + preferences. Ties to the invite/pre-join flow.
+- **Security audit before launch.** Crypto is subtly breakable: external review, manifest-parser fuzzing, CLI↔web interop test vectors, key-continuity/transparency verification tests.
+
+### Tier 3 — engineering hygiene
+- **Protocol/API versioning** (manifest `version`, client↔server skew, breaking-change policy; CLI auto-update via existing goreleaser).
+- **DoS hotspots** (signaling DO single-threaded contention, Worker/DO rate limits).
+- **Data residency** (R2/D1 region, UK/EU jurisdiction controls).
+- **Security audit log** (key enrolment, device revoke, failed auth) — distinct from OTEL telemetry.
+- **Admin/support tooling** (account/abuse/quota ops without content access).
