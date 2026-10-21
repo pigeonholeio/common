@@ -12,10 +12,19 @@ PigeonHole is a **zero-knowledge, end-to-end-encrypted** secret/file sharing ser
 - **Contract:** a single **OpenAPI spec is the source of truth** between CLI, web (nestbox) and backend. Types + client + server route validation are generated/validated from it.
 - **Observability:** **OpenTelemetry** → `otel.planesailing.io` (OTLP/HTTP, Bearer). No console/ad-hoc logging.
 - **Auth:** OIDC (**Authentik**) → PigeonHole **EdDSA JWT** + JWKS endpoint.
-- **Crypto:** client-side only (GPG/age); server zero-knowledge. **No KMS/Vault** — pre-join encryption is a client-side key-wrapping concern, fully separate from the API (§6).
+- **Crypto:** client-side only; **OpenPGP** (format locked — see below); server zero-knowledge. **No KMS/Vault** — pre-join encryption is a client-side key-wrapping concern, fully separate from the API (§6).
 - **Email:** Cloudflare **Email Sending** binding (not Resend).
 - **Transfer:** two modes — R2 store-and-forward **and** WebRTC direct P2P (NAT-traversing, no self-hosted relay) (§4).
 - Exploit Cloudflare platform primitives where they fit (§5); self-host nothing.
+
+**Locked 2026-10-21 (batch 2):**
+- **Crypto format = OpenPGP** (chosen for the SEO/marketing/content story). No streaming cost: modern **SEIPD v2 (RFC 9580) uses chunked AEAD internally**, and the CLI already uses ProtonMail `gopenpgp` which streams → per-chunk integrity retained. Closes the §4A format 🔶.
+- **Account recovery = ACCEPT LOSS.** No server-side master-key backup (not even encrypted). Identity recovers via the IdP (sign back in); a lost master key ⇒ a **new** master key re-attested to the same email by Authentik (§9.2), so identity/trust continuity survives — only *past* ciphertext is lost. Hedges are client-side & optional only: run ≥2 devices, or user-exported offline master key (never sent to us).
+- **Scope: CLI-first.** `nestbox` (web) is **parked** but the protocol/manifest/keys stay client-agnostic so it can be added later. Removes "browser E2EE trust" from the v1 critical path.
+- **Metadata is retained — it's the monetisation basis.** Content stays zero-knowledge, but transfer metadata (size, counts, who→whom, when) is **deliberately kept** to meter/bill. Obligation: state it plainly in the privacy policy/threat model and minimise to what billing needs. Resolves the metadata 🔶 toward "keep + disclose," not "hide."
+- **Tenant = email domain**, derived from the IdP's **verified email** regardless of upstream provider (GitHub/GitLab/Microsoft/Google via Authentik). Custom domains = orgs (admin via DNS-TXT domain proof); freemail domains (gmail/outlook/…) = individual users, **not** one shared org. Dovetails with WKD/DANE domain anchors (§9).
+- **Unclaimed/pre-join secrets expire at a default TTL** (overridable per-send); on expiry GC deletes R2 objects + OpenBao-wrapped key + D1 row (§6.1).
+- **Notifications (common-practice defaults):** email the recipient on a new secret / invite via Email Sending — minimal content ("You've received a secret", claim link; no payload, sender shown only if the sender opts in); recipient notifications **on by default**, per-user toggle; optional sender delivery-receipt (opt-in); rate-limited to avoid spam. P2P needs none (the rendezvous code is shared OOB). CLI has no push → recipient runs/polls.
 
 ---
 
@@ -72,7 +81,7 @@ Both modes move only **ciphertext** and reuse the same identity/device-key trust
 - **Download (Option 3):** Worker authenticates, returns the **tiny `hdr` inline** + a **presigned GET** for `body`. Client concatenates header → body stream and decrypts. Worker does one small header read + URL signing — no payload streaming.
 - **Cost of this choice (accepted):** the Worker needs an **R2 S3 credential** (access key/secret) to sign presigned URLs → stored in **Secrets Store**. This is a deliberate trade away from the binding-only "no static R2 creds" option, in exchange for keeping the Worker out of the data path.
 - **Onetime / burn-after-read:** a **Durable Object** gates **issuance** — it hands out a **single-use, short-TTL** presigned URL (≈60s) and marks the secret consumed **on grant**. Semantics are therefore "**one download grant**," not "one confirmed delivery" (a failed fetch still burns). Optional stronger variant: client `POST …/consumed` receipt after successful decrypt → Worker deletes (but a misbehaving client can skip it). R2 event notifications fire on create/delete, **not reads**, so can't observe delivery.
-- **🔶 Client-side format:** OpenPGP streams poorly for ranged/resumable decrypt; a chunked AEAD (`age` / Tink-style) client-side makes streaming genuinely usable. Server stays format-agnostic — decide in the client workstream.
+- **Client-side format = OpenPGP (LOCKED).** Use **SEIPD v2 (RFC 9580) AEAD** so the payload is chunk-authenticated internally (good for streaming/ranged/resumable); `gopenpgp` streams. Server stays format-agnostic regardless.
 
 ### 4C. Progress reporting (upload / download / stream)
 
@@ -266,9 +275,9 @@ Require the binding to carry a **quorum of signatures from independent attesters
 
 ## 10. Open decisions (🔶 — settle as we hit them)
 1. ~~Pre-join wrapping~~ **LOCKED (§6.1):** Option C (OpenBao unseal, default) **+** Option B (2-of-2 high-security toggle). OpenBao on homelab; no KMS.
-2. **Pre-enrolment-secret policy** for new devices (accept / re-wrap / recovery key). → B3.
+2. **Pre-enrolment-secret policy** for new devices (accept / cheap re-wrap from an online device, §6.3). → B3. *(No recovery-key option — accept-loss is locked.)*
 3. **Onetime semantics** across multiple devices. → B2.
-4. **Client streaming crypto format** (chunked AEAD vs OpenPGP). → client workstream.
+4. ~~Client crypto format~~ **LOCKED: OpenPGP** (SEIPD v2 AEAD; `gopenpgp`). §4A.
 5. ~~Download response shape~~ **LOCKED:** inline `hdr` + presigned GET for `body` (§4A Option 3); presigned direct-to-R2 both ways, Worker control-plane only.
 6. **OpenAPI tooling:** `@hono/zod-openapi` (spec-as-code) vs consume YAML via codegen. → B0.
 7. **Real-time (4B) scope:** ship P2P streaming in v1 or as a fast-follow? → affects B-phase ordering.
@@ -279,12 +288,12 @@ Require the binding to carry a **quorum of signatures from independent attesters
 
 - **B0 — Skeleton & contract.** TS/Hono repo `pigeonhole-server`; `wrangler.toml` with D1 + R2 + DO + Analytics + KV + Secrets Store bindings; OTEL wired to `otel.planesailing.io`; OpenAPI tooling chosen (decision 6); `/ping` live. Lock the refined spec (§2 🔶 edits) and generate types/clients.
 - **B1 — Secret flow (presigned direct-to-R2).** `POST /secret` → presigned PUT (+ multipart) for body + header objects; `GET /secret/{id}/download` → inline `hdr` + presigned GET for `body` (§4A Option 3); `GET/DELETE /secret`, `GET /secret/{id}`. Header/body split objects (§6.3). Onetime via DO (single-use short-TTL grant). `expiration` + quota. R2 S3 cred in Secrets Store.
-  - *Client (CLI) I/O routing* (deferred, not started — build alongside the CLI regen): retrieve streams to **stdout** when the payload came from piped stdin (archive = single `plain.txt`), else writes the file/folder to the dest path; honour `-`/TTY detection and `--output`. See §12. *(Rhys: hold, folded into plan 2026-10-19.)*
-- **B2 — Auth & identity.** OIDC/Authentik exchange, EdDSA JWT + JWKS, `/user*`, `GET /user/{id}/public`, invites via **Email Sending binding**, ephemeral/pre-join flow (link-fragment, §6). Settle decisions 1, 3.
-- **B3 — Multi-device + Layer-1 anti-MITM.** Device/session registry, per-device key enrolment w/ master-key signatures, multi-recipient send, device revoke, new-key notifications. Settle decision 2.
-- **B4 — Real-time direct P2P (4B).** Signaling Durable Object (WebSocket), device-key-signed SDP/ICE, Cloudflare Realtime TURN wiring, Pion in CLI + browser WebRTC in nestbox. **Wormhole-style rendezvous** (sender-first short code, either-order arrival, reconnect/resume, SAS confirm + `--force`, optional SPAKE2), **inbound validation** (`--ref`/`--from`/`--accept-any`/`--yes`), **signed usage reports → Analytics Engine**. Separate from the REST API. *(Order vs B5 per decision 7.)*
-- **B5 — Platform hardening.** `/user/analytics` on Analytics Engine; Queues + Cron expiry GC; rate limiting + Turnstile; quota tuning; OTEL coverage audit.
-- **B6 — Launch readiness.** End-to-end CLI + nestbox against prod Worker; `api.pigeonhole.io` DNS; security review; docs.
+  - *Client (CLI) I/O routing* (deferred, not started — build alongside the CLI regen): retrieve routes by the manifest **descriptor** (§4D) — `kind: stream` → **stdout**, `kind: file|dir` → dest path; honour `-`/TTY detection and `--output`. See §12. *(Rhys: hold, folded into plan 2026-10-19.)*
+- **B2 — Auth & identity.** OIDC/Authentik (device-code flow for CLI), EdDSA JWT + JWKS + **KV revocation denylist** (short-TTL + refresh), `/user*`, `GET /user/{id}/public`, **tenant = verified email domain**, invites via **Email Sending binding**, pre-join flow (OpenBao Option C default + 2-of-2 toggle, §6.1), unclaimed-secret TTL + GC, notification defaults (§1). Settle decision 3.
+- **B3 — Multi-device + Layer-1 anti-MITM.** Device/session registry, per-device key enrolment w/ master-key signatures, multi-recipient send, device revoke (→ denylist), new-key notifications, cheap re-wrap for new-device old-secret access (§6.3). Settle decision 2.
+- **B4 — Real-time direct P2P (4B).** Signaling Durable Object (WebSocket), device-key-signed SDP/ICE, Cloudflare Realtime TURN wiring, **Pion in CLI** (nestbox parked). **Wormhole-style rendezvous** (sender-first short code, either-order arrival, reconnect/resume, SAS confirm + `--force`, optional SPAKE2), **inbound validation** (`--ref`/`--from`/`--accept-any`/`--yes`), **signed usage reports → Analytics Engine**. Separate from the REST API. *(Order vs B5 per decision 7.)*
+- **B5 — Platform hardening.** `/user/analytics` on Analytics Engine; Queues + Cron expiry GC; rate limiting + Turnstile; quota/billing metering; D1 backup/DR; OTEL coverage audit.
+- **B6 — Launch readiness.** End-to-end CLI against prod Worker; `api.pigeonhole.io` DNS; **security audit** (crypto review, manifest-parser fuzzing, interop vectors); docs/blog (OpenPGP story).
 - **B7 — Key Transparency (Layer 2).** Merkle log, inclusion/consistency proofs, client self-audit, STH gossip/witness. Optional Layer 3 anchors (WKD/DANE, IdP co-sign).
 
 ---
@@ -293,7 +302,7 @@ Require the binding to carry a **quorum of signatures from independent attesters
 - **`common`** — OpenAPI spec (source of truth) + shared utils. Spec is the keystone.
 - **`pigeonhole-cli`** — Go/Cobra client; regen from spec; new upload path (streaming PUT) + master-key/device logic; **Pion** for 4B P2P.
   - **I/O routing fix (Rhys-started):** on retrieve, route output by the manifest **descriptor** (§4D) — `kind: stream` → **stdout**; `kind: file|dir` → write to dest path. (Cleaner than today's `plain.txt` heuristic; the signed descriptor carries intent explicitly.) Today `secret retrieve` always `MkdirAll`s a dir and untars (`secret.go` → `DecompressFile`), and send wraps stdin as `plain.txt` (`compressStdinData`). Honour `-`/TTY detection and `--output` override.
-- **`nestbox`** — React web app (CF Pages); client of the API; same key/device logic; browser WebRTC for 4B.
+- **`nestbox`** — React web app (CF Pages). **PARKED for v1** (CLI-first). Protocol/manifest/keys kept client-agnostic so it slots in later; browser-E2EE hardening (§13) is deferred with it.
 - **`pigeonhole-server`** — **new**, TS/Hono/Workers. The subject of this plan.
 
 ---
@@ -303,18 +312,18 @@ Require the binding to carry a **quorum of signatures from independent attesters
 Areas the plan hasn't covered yet. Tier 1 is security-critical and should be decided **before** build; Tier 2 before launch; Tier 3 is engineering hygiene.
 
 ### Tier 1 — decide before building
-- **Account & key recovery / loss.** Lose all devices + master key ⇒ sent secrets are **unrecoverable by design** (zero-knowledge). Need an explicit choice: (a) recovery passphrase/phrase that wraps a backup of the master key (user-held), (b) social/multi-device recovery, or (c) accept data loss. Drives master-key backup UX. **Biggest unresolved UX/security call.**
-- **JWT revocation.** Tokens are stateless; device-revoke/logout must actually invalidate them → short-TTL access tokens + refresh, plus a **revocation denylist in KV** keyed by device/session. Without this, "revoke a device" (§8) doesn't bite until expiry.
-- **Browser E2EE trust (nestbox).** The web client is the weakest link: private keys in the browser (IndexedDB/WebCrypto), and XSS or a JS supply-chain compromise = key theft. Needs strict **CSP, SRI, minimal audited deps** (openpgp.js / age-js), and a documented "the web app is higher-trust than the CLI" caveat. Prefer non-extractable WebCrypto keys where the format allows.
-- **Metadata privacy (explicit threat model).** Content is zero-knowledge, but the server sees **who → whom, when, how often, how big** — a social graph + traffic analysis. Decide what's retained, for how long, and whether to pad sizes / coarsen timing. State it honestly in the threat model.
-- **Crypto format + library lock (the §4A 🔶).** OpenPGP vs `age`/chunked-AEAD is foundational (drives streaming, the §4D manifest, re-encryption). Pick algorithms (x25519 today; ed25519 for signing; PQ posture later) and a specific audited library per platform.
+- ✅ **Account & key recovery — RESOLVED: accept loss.** No server-side master-key backup (not even encrypted). IdP gives identity continuity (new master re-attested to same email, §9.2); only past ciphertext is lost. Optional client-side hedges: ≥2 devices, or user-exported offline master key. (§1 batch 2)
+- **JWT revocation.** Tokens are stateless; device-revoke/logout must actually invalidate them → short-TTL access tokens + refresh, plus a **revocation denylist in KV** keyed by device/session. → **B2.** (Still to build, but approach locked.)
+- ⏸️ **Browser E2EE trust — DEFERRED with `nestbox`** (CLI-first). Revisit when the web client is unparked: CSP/SRI/minimal audited deps, non-extractable keys where possible.
+- ✅ **Metadata privacy — RESOLVED: retain + disclose.** Metadata (size/counts/who→whom/when) is deliberately kept as the **monetisation basis**; content stays zero-knowledge. Obligation: disclose in privacy policy, minimise to billing needs. (§1 batch 2)
+- ✅ **Crypto format — RESOLVED: OpenPGP** (SEIPD v2 AEAD; `gopenpgp`; x25519 enc / ed25519 sign; PQ posture later). (§1 batch 2, §4A)
 
 ### Tier 2 — decide before launch
-- **Abuse / anti-spam / content liability.** Anyone who knows an email can send → spam, unsolicited/illegal content as a store-and-forward conduit. Need recipient **opt-in/blocklist**, report path, sender reputation, and a documented takedown stance (we can delete ciphertext-by-reference but can't inspect content). Rate-limit/Turnstile (§5) is only part of it.
-- **Quota / billing / tenant model.** Spec has `413/429` + a `Tenant` entity but no defined semantics. Define free vs paid tiers, per-user/per-tenant storage + transfer caps, and what a Tenant *is* (B2B orgs?). Drives quota logic.
-- **Retention / deletion / UK-GDPR.** Expiry GC (Cron+Queue, §5) plus: orphaned-upload / incomplete-multipart cleanup, unclaimed-escrow TTL (§6), right-to-erasure, and **D1 backup/DR** (lose D1 metadata ⇒ secrets unrecoverable even if R2 survives).
-- **Notifications.** How a recipient learns they have a secret — Email Sending (§5), web, CLI poll, push? + preferences. Ties to the invite/pre-join flow.
-- **Security audit before launch.** Crypto is subtly breakable: external review, manifest-parser fuzzing, CLI↔web interop test vectors, key-continuity/transparency verification tests.
+- **Abuse / anti-spam / content liability.** Anyone who knows an email can send → spam, unsolicited/illegal content as a store-and-forward conduit. Need recipient **opt-in/blocklist**, report path, sender reputation, and a documented takedown stance (we can delete ciphertext-by-reference but can't inspect content). Rate-limit/Turnstile (§5) is only part of it. **Still open.**
+- ✅ **Tenant model — RESOLVED: email domain.** Tenant = verified-email domain across upstream providers; custom domains = orgs (DNS-TXT proof), freemail = individuals (§1 batch 2). **Still open:** free/paid tiers + per-user/tenant quota caps (billing uses the retained metadata).
+- 🟡 **Retention / deletion / UK-GDPR — PARTLY RESOLVED:** unclaimed/pre-join secrets expire at default/overridable TTL → GC (§6.1). **Still to design:** orphaned/incomplete-multipart cleanup, right-to-erasure flow, **D1 backup/DR**.
+- ✅ **Notifications — RESOLVED (common-practice defaults).** Email on new secret/invite, minimal content + claim link, recipient on by default + toggle, optional sender receipt, rate-limited; P2P none; CLI polls. (§1 batch 2)
+- **Security audit before launch.** Crypto is subtly breakable: external review, manifest-parser fuzzing, interop test vectors, key-continuity/transparency verification tests. → **B6.**
 
 ### Tier 3 — engineering hygiene
 - **Protocol/API versioning** (manifest `version`, client↔server skew, breaking-change policy; CLI auto-update via existing goreleaser).
